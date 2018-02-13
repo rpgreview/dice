@@ -15,6 +15,8 @@ typedef enum invocation_type {
 struct arguments {
     char prompt;
     invocation_type mode;
+    char *cmd;
+    int cmd_len;
     char *seed;
     bool seed_set;
 };
@@ -25,7 +27,7 @@ struct arguments {
 */
 static struct argp_option options[] = {
     {"prompt",  'p', "CHARACTER", 0, "Set the dice interactive prompt to CHARACTER.\n(Default: '>')"},
-    {0,  'c', 0, 0, "Read commands from the first non-option argument."},
+    {0,  'c', 0, OPTION_HIDDEN, "Read commands from the first non-option argument. (Not yet implemented.)"},
     {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is based on current time.)"},
     {"help", 'h', NULL, 0, "Print this help message."},
     {0}
@@ -67,6 +69,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             }
             break;
         case ARGP_KEY_ARG:
+            {
+                if(arguments->mode == COMMAND) {
+                }
+            }
             break;
         default:
             return ARGP_ERR_UNKNOWN;
