@@ -246,6 +246,7 @@ int main(int argc, char** argv) {
             size_t bufsize = strlen(line);
             if(0 == parse(d, line, bufsize)) {
                 roll(d);
+                add_history(line);
             }
             free(line);
         } while(!d->quit);
