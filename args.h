@@ -8,19 +8,17 @@
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
-    SCRIPTED = 1,
-    COMMAND = 2,
-    PIPE = 3,
+    SCRIPTED,
+    PIPE
 } invocation_type;
 
 /* This structure is used by main to communicate with parse_opt. */
 struct arguments {
     char prompt;
     invocation_type mode;
-    char *cmd;
-    int cmd_len;
     char *seed;
     bool seed_set;
+    char *script;
 };
 
 /*
@@ -29,7 +27,6 @@ struct arguments {
 */
 static struct argp_option options[] = {
     {"prompt",  'p', "CHARACTER", 0, "Set the dice interactive prompt to CHARACTER.\n(Default: '>')"},
-    {0,  'c', 0, OPTION_HIDDEN, "Read commands from the first non-option argument. (Not yet implemented.)"},
     {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is based on current time.)"},
     {"help", 'h', NULL, 0, "Print this help message."},
     {0}
@@ -53,11 +50,6 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
                 }
             }
             break;
-        case 'c':
-            {
-                arguments->mode = COMMAND;
-            }
-            break;
         case 'h':
             {
                 argp_state_help(state, stdout, ARGP_HELP_USAGE | ARGP_HELP_LONG | ARGP_HELP_DOC);
@@ -72,6 +64,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             break;
         case ARGP_KEY_ARG:
             {
+                {
+                    arguments->mode = SCRIPTED;
+                    arguments->script = arg;
+                }
             }
             break;
         default:

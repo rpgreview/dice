@@ -208,7 +208,6 @@ void roll(const struct roll_encoding *d) {
 
 int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
-    FILE* ist = stdin;
 
     struct arguments args;
     args.prompt = '>';
@@ -219,7 +218,20 @@ int main(int argc, char** argv) {
     }
     args.seed = "0";
     args.seed_set = false;
+    args.script = "-";
     argp_parse(&argp, argc, argv, 0, 0, &args);
+
+    FILE* ist;
+    if(0 == strcmp(args.script, "-")) { 
+        ist = stdin;
+    } else {
+        errno = 0;
+        ist = fopen(args.script, "r");
+        if(ist == NULL) {
+            fprintf(stderr, "Error %d opening file %s\n", errno, args.script);
+            exit(1);
+        }
+    }
 
     struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
     if(!d) {
