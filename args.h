@@ -4,11 +4,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include <argp.h>
+#include <unistd.h>
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
     SCRIPTED = 1,
-    COMMAND = 2
+    COMMAND = 2,
+    PIPE = 3,
 } invocation_type;
 
 /* This structure is used by main to communicate with parse_opt. */
@@ -70,8 +72,6 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             break;
         case ARGP_KEY_ARG:
             {
-                if(arguments->mode == COMMAND) {
-                }
             }
             break;
         default:

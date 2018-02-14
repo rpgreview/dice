@@ -41,6 +41,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
 
     // The non-whitespace part of buf should begin with 'd' or 'D', optionally prefixed by number of dice (default: 1)
     // Also offer quit command.
+    // Also don't complain about empty lines.
     if(*(buf + charnum) == 'd' || *(buf + charnum) == 'D') {
         d->ndice = 1;
     } else if(isdigit(*(buf + charnum))) {
@@ -85,6 +86,8 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
             printf("Unexpected symbol: %c\n", *(buf + charnum));
             return 1;
         }
+    } else if(*(buf + charnum) == '\0') {
+        return 1;
     } else {
         printf("\nUnknown symbol in first character: %c (with hex encoding %x)\n", *(buf + charnum), *(buf + charnum));
         return 1;
@@ -205,10 +208,15 @@ void roll(const struct roll_encoding *d) {
 
 int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
+    FILE* ist = stdin;
 
     struct arguments args;
     args.prompt = '>';
-    args.mode = INTERACTIVE;
+    if(isatty(fileno(stdin))) {
+        args.mode = INTERACTIVE;
+    } else {
+        args.mode = PIPE;
+    }
     args.seed = "0";
     args.seed_set = false;
     argp_parse(&argp, argc, argv, 0, 0, &args);
@@ -252,6 +260,19 @@ int main(int argc, char** argv) {
             }
             free(line);
         } while(!d->quit);
+    } else if(args.mode == PIPE || args.mode == SCRIPTED) {
+        do {
+            size_t bufsize = 0;
+            char *line;
+            getline(&line, &bufsize, ist);
+            if(line == NULL || line == 0 || feof(stdin)) {
+                break;
+            }
+            if(0 == parse(d, line, bufsize)) {
+                roll(d);
+            }
+            free(line);
+        } while(!(d->quit || feof(ist)));
     }
     free(d);
     d = NULL;
