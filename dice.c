@@ -211,11 +211,16 @@ int main(int argc, char** argv) {
     args.seed_set = false;
     argp_parse(&argp, argc, argv, 0, 0, &args);
 
-    struct roll_encoding *d = (struct roll_encoding*)malloc(sizeof(struct roll_encoding));
+    struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
     if(!d) {
         fprintf(stderr, "malloc error\n");
         exit(1);
     }
+    d->ndice = 0;
+    d->nsides = 0;
+    d->shift = 0;
+    d->seed = 0;
+    d->quit = false;
 
     // Set seed.
     char *s_endptr;
