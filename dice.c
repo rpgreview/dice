@@ -258,6 +258,7 @@ int main(int argc, char** argv) {
         do {
             char *line = readline(args.prompt);
             if(line == NULL || line == 0) {
+                printf("\n");
                 break;
             }
             size_t bufsize = strlen(line);
