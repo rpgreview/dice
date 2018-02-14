@@ -22,7 +22,6 @@ struct roll_encoding {
     long ndice;
     long nsides;
     long shift;
-    long seed;
     bool quit;
 };
 
@@ -206,6 +205,44 @@ void roll(const struct roll_encoding *d) {
     printf("%ld\n", result);
 }
 
+void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
+    char *line = readline(args->prompt);
+    if(line == NULL || line == 0) {
+        printf("\n");
+        d->quit = true;
+        free(line);
+        return;
+    }
+    size_t bufsize = strlen(line);
+    if(0 == parse(d, line, bufsize)) {
+        roll(d);
+        add_history(line);
+    }
+    free(line);
+}
+
+void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
+    size_t bufsize = 0;
+    char *line;
+    getline(&line, &bufsize, args->ist);
+    if(line == NULL || line == 0 || feof(args->ist)) {
+        d->quit = true;
+        free(line);
+        return;
+    }
+    if(0 == parse(d, line, bufsize)) {
+        roll(d);
+    }
+    free(line);
+}
+
+void dice_init(struct roll_encoding *d) {
+    d->ndice = 0;
+    d->nsides = 0;
+    d->shift = 0;
+    d->quit = false;
+}
+
 int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
 
@@ -216,72 +253,34 @@ int main(int argc, char** argv) {
     } else {
         args.mode = PIPE;
     }
-    args.seed = "0";
-    args.seed_set = false;
-    args.script = "-";
+    args.seed = 0;
+    args.ist = stdin;
     argp_parse(&argp, argc, argv, 0, 0, &args);
-
-    FILE* ist;
-    if(0 == strcmp(args.script, "-")) { 
-        ist = stdin;
-    } else {
-        errno = 0;
-        ist = fopen(args.script, "r");
-        if(ist == NULL) {
-            fprintf(stderr, "Error %d opening file %s\n", errno, args.script);
-            exit(1);
-        }
-    }
 
     struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
     if(!d) {
         fprintf(stderr, "malloc error\n");
         exit(1);
     }
-    d->ndice = 0;
-    d->nsides = 0;
-    d->shift = 0;
-    d->seed = 0;
-    d->quit = false;
+    dice_init(d);
 
-    // Set seed.
-    char *s_endptr;
-    d->seed = strtol(args.seed, &s_endptr, 10);
-    if(!args.seed_set) {
-        struct timespec t;
-        clock_gettime(CLOCK_REALTIME, &t);
-        d->seed = t.tv_nsec * t.tv_sec;
+    void (*process_next_line)(struct roll_encoding*, struct arguments*);
+    switch(args.mode) {
+        case INTERACTIVE:
+            {
+                process_next_line = &readline_wrapper;
+            }
+            break;
+        case PIPE: case SCRIPTED:
+            {
+                process_next_line = &getline_wrapper;
+            }
+            break;
     }
-    srandom(d->seed);
 
-    if(args.mode == INTERACTIVE) {
-        do {
-            char *line = readline(args.prompt);
-            if(line == NULL || line == 0) {
-                printf("\n");
-                break;
-            }
-            size_t bufsize = strlen(line);
-            if(0 == parse(d, line, bufsize)) {
-                roll(d);
-                add_history(line);
-            }
-            free(line);
-        } while(!d->quit);
-    } else if(args.mode == PIPE || args.mode == SCRIPTED) {
-        do {
-            size_t bufsize = 0;
-            char *line;
-            getline(&line, &bufsize, ist);
-            if(line == NULL || line == 0 || feof(stdin)) {
-                break;
-            }
-            if(0 == parse(d, line, bufsize)) {
-                roll(d);
-            }
-            free(line);
-        } while(!(d->quit || feof(ist)));
-    }
+    do {
+        process_next_line(d, &args);
+    } while(!(d->quit || feof(args.ist)));
     free(d);
     d = NULL;
     return 0;

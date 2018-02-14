@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <argp.h>
 #include <unistd.h>
+#include <time.h>
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
@@ -16,9 +17,8 @@ typedef enum invocation_type {
 struct arguments {
     char *prompt;
     invocation_type mode;
-    char *seed;
-    bool seed_set;
-    char *script;
+    long seed;
+    FILE *ist;
 };
 
 /*
@@ -55,15 +55,32 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             break;
         case 's':
             {
-                arguments->seed = arg;
-                arguments->seed_set = true;
+                char *s_endptr;
+                errno = 0;
+                arguments->seed = strtol(arg, &s_endptr, 10);
+                if((errno == ERANGE && (arguments->seed == LONG_MAX || arguments->seed == LONG_MIN))
+                    || (errno != 0 && arguments->seed == 0)) {
+                    fprintf(stderr, "Error %d setting seed.\n", errno);
+                    return 1;
+                }
+                struct timespec t;
+                clock_gettime(CLOCK_REALTIME, &t);
+                arguments->seed = t.tv_nsec * t.tv_sec;
+                srandom(arguments->seed);
             }
             break;
         case ARGP_KEY_ARG:
             {
                 {
                     arguments->mode = SCRIPTED;
-                    arguments->script = arg;
+                    if(0 != strcmp(arg, "-")) { 
+                        errno = 0;
+                        arguments->ist = fopen(arg, "r");
+                        if(arguments->ist == NULL) {
+                            fprintf(stderr, "Error %d opening file %s\n", errno, arg);
+                            exit(1);
+                        }
+                    }
                 }
             }
             break;
