@@ -14,7 +14,7 @@ typedef enum invocation_type {
 
 /* This structure is used by main to communicate with parse_opt. */
 struct arguments {
-    char prompt;
+    char *prompt;
     invocation_type mode;
     char *seed;
     bool seed_set;
@@ -26,7 +26,7 @@ struct arguments {
    Order of fields: {NAME, KEY, ARG, FLAGS, DOC}.
 */
 static struct argp_option options[] = {
-    {"prompt",  'p', "CHARACTER", 0, "Set the dice interactive prompt to CHARACTER.\n(Default: '>')"},
+    {"prompt",  'p', "STRING", 0, "Set the dice interactive prompt to STRING.\n(Default: '>')"},
     {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is based on current time.)"},
     {"help", 'h', NULL, 0, "Print this help message."},
     {0}
@@ -41,13 +41,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
     switch (key) {
         case 'p':
             {
-                int prompt_length = strnlen(arg, 2);
-                if(prompt_length == 1) {
-                    arguments->prompt = *arg;
-                } else {
-                    fprintf(stderr, "The prompt string must be a single character.\n");
-                    exit('p');
-                }
+                int prompt_length = strlen(arg);
+                arguments->prompt = (char*)malloc(prompt_length*sizeof(char));
+                memset(arguments->prompt, 0, prompt_length);
+                strncpy(arguments->prompt, arg, prompt_length + 1);
             }
             break;
         case 'h':

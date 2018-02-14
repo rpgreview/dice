@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
 
     struct arguments args;
-    args.prompt = '>';
+    args.prompt = "> ";
     if(isatty(fileno(stdin))) {
         args.mode = INTERACTIVE;
     } else {
@@ -256,12 +256,7 @@ int main(int argc, char** argv) {
 
     if(args.mode == INTERACTIVE) {
         do {
-            char prompt[3];
-            memset(prompt, 0, 3);
-            prompt[0] = args.prompt;
-            prompt[1] = ' ';
-            prompt[2] = '\0';
-            char *line = readline(prompt);
+            char *line = readline(args.prompt);
             if(line == NULL || line == 0) {
                 break;
             }
