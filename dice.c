@@ -204,6 +204,8 @@ void roll(const struct roll_encoding *d) {
 }
 
 int main(int argc, char** argv) {
+    rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
+
     struct arguments args;
     args.prompt = '>';
     args.mode = INTERACTIVE;
