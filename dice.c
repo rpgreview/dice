@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
 
     struct arguments args;
-    args.prompt = "> ";
+    args.prompt = "\001\e[0;32m\002dice> \001\e[0m\002";
     if(isatty(fileno(stdin))) {
         args.mode = INTERACTIVE;
     } else {
