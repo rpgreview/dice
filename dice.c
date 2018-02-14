@@ -15,6 +15,9 @@
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
+const char *argp_program_version = "Dice 0.1";
+const char *argp_program_bug_address = "cryptarch@github";
+
 struct roll_encoding {
     long ndice;
     long nsides;
@@ -22,9 +25,6 @@ struct roll_encoding {
     long seed;
     bool quit;
 };
-
-const char *argp_program_version = "Dice 0.1";
-const char *argp_program_bug_address = "cryptarch@github";
 
 int parse(struct roll_encoding *d, const char *buf, const size_t len) {
     d->ndice = 0;
