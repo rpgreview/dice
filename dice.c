@@ -40,6 +40,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
     }
 
     // The non-whitespace part of buf should begin with 'd' or 'D', optionally prefixed by number of dice (default: 1)
+    // Also offer quit command.
     if(*(buf + charnum) == 'd' || *(buf + charnum) == 'D') {
         d->ndice = 1;
     } else if(isdigit(*(buf + charnum))) {
@@ -57,6 +58,31 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
             || d->ndice <= 0) {
             printf("Invalid number of dice: %s\n", ndice_str);
             printf("(Require: 0 < number of dice < %ld)\n", LONG_MAX);
+            return 1;
+        }
+    } else if(*(buf + charnum) == 'q') {
+        const int cmd_len = strlen("quit");
+        char quit_str[cmd_len + 1];
+        memset(quit_str, 0, cmd_len + 1);
+        int offset = charnum; // If whitespace was progressed through earlier, charnum is now offset from intra-word character place.
+        while(charnum - offset < cmd_len && isalpha(*(buf + charnum))) {
+            quit_str[charnum - offset] = *(buf + charnum);
+            ++charnum;
+        }
+        quit_str[charnum] = '\0';
+        if(0 != strncmp(quit_str, "quit", 5)) {
+            printf("\nUnknown command: %s\n", quit_str);
+            return 1;
+        }
+        // Okay, they said quit, but after this there shouldn't be anything else but whitespace.
+        while(isspace(*(buf + charnum))) {
+            ++charnum;
+        }
+        if(*(buf + charnum) == '\0') {
+            d->quit = true;
+            return 1;
+        } else {
+            printf("Unexpected symbol: %c\n", *(buf + charnum));
             return 1;
         }
     } else {
@@ -217,7 +243,7 @@ int main(int argc, char** argv) {
                 roll(d);
             }
             free(line);
-        } while(!(d->quit));
+        } while(!d->quit);
     }
     free(d);
     d = NULL;
