@@ -7,6 +7,10 @@
 #include <errno.h>
 #include <time.h>
 #include <math.h>
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #include "args.h"
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
@@ -27,12 +31,6 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
     d->nsides = 0;
     d->shift = 0;
     d->quit = false;
-
-    // Check for EOF
-    if(*buf == 0) {
-        d->quit = true;
-        return 1;
-    }
 
     int charnum = 0;
 
@@ -205,10 +203,16 @@ int main(int argc, char** argv) {
 
     if(args.mode == INTERACTIVE) {
         do {
-            printf("%c ", args.prompt);
-            char *line = NULL;
-            size_t bufsize = 0;
-            getline(&line, &bufsize, stdin);
+            char prompt[3];
+            memset(prompt, 0, 3);
+            prompt[0] = args.prompt;
+            prompt[1] = ' ';
+            prompt[2] = '\0';
+            char *line = readline(prompt);
+            if(line == NULL || line == 0) {
+                break;
+            }
+            size_t bufsize = strlen(line);
             if(0 == parse(d, line, bufsize)) {
                 roll(d);
             }

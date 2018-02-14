@@ -1,4 +1,4 @@
 .PHONY: all
 
 all:
-	gcc -o dice -lm dice.c
+	gcc -Wall -o dice -lm -lreadline dice.c
