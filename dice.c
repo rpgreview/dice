@@ -294,6 +294,19 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                                 s = error;
                         }
                         break;
+                    case recv_x:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                d->ndice = 1;
+                                s = recv_d;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
                     case recv_num_dice:
                         switch(t[toknum].op) {
                             case 'd': case 'D':
