@@ -7,6 +7,24 @@ An interpreter and interactive shell for standard dice notation such as `3d6` or
 Usage
 ----
 
+~~~
+Usage: dice [-?hV] [-p STRING] [-s NUMBER] [--prompt=STRING] [--seed=NUMBER]
+            [--help] [--help] [--usage] [--version] [file]
+Dice -- An interpreter for standard dice notation (qv Wikipedia:Dice_notation)
+
+  -p, --prompt=STRING        Set the dice interactive prompt to STRING.
+                             (Default: '>')
+  -s, --seed=NUMBER          Set the seed to NUMBER. (Default is based on
+                             current time.)
+  -?, --help                 Give this help list
+  -h, --help                 Print this help message.
+      --usage                Give a short usage message
+  -V, --version              Print program version
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+~~~
+
 ### Notation
 
 In addition to standard dice notation,
