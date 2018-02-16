@@ -25,167 +25,250 @@ struct roll_encoding {
     bool quit;
 };
 
-int parse(struct roll_encoding *d, const char *buf, const size_t len) {
+void dice_init(struct roll_encoding *d) {
     d->ndice = 0;
     d->nsides = 0;
     d->shift = 0;
     d->quit = false;
+}
 
+typedef enum token_t {
+    none = 0,
+    number,
+    operator,
+    command,
+    end
+} token_t;
+
+typedef enum cmd_t {
+    quit
+} cmd_t;
+
+struct cmd_map {
+    cmd_t cmd_code;
+    char cmd_str[8];
+};
+
+struct cmd_map commands[] = {
+    { quit, { "quit" } }
+};
+#define NUMBER_OF_DEFINED_COMMANDS 1
+#define CMD_MAX_STR_LEN 4
+
+struct token {
+    token_t type;
+    long number;
+    char op;
+    cmd_t cmd;
+};
+
+void token_init(struct token *t) {
+    t->type = none;
+    t->number = 0;
+    t->op = '?';
+    t->cmd = -1;
+}
+
+int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
     int charnum = 0;
-
-    // First eliminate any leading whitespace.
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    // The non-whitespace part of buf should begin with 'd' or 'D', optionally prefixed by number of dice (default: 1)
-    // Also offer quit command.
-    // Also don't complain about empty lines.
-    if(*(buf + charnum) == 'd' || *(buf + charnum) == 'D') {
-        d->ndice = 1;
-    } else if(isdigit(*(buf + charnum))) {
-        char ndice_str[LONG_MAX_STR_LEN + 1];
-        memset(ndice_str, 0, LONG_MAX_STR_LEN + 1);
-        int offset = charnum; // If whitespace was progressed through earlier, charnum is now offset from current digit.
-        while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-            ndice_str[charnum - offset] = *(buf + charnum);
+    *tokens_found = 0;
+    while(*(buf + charnum) != '\0' && charnum <= len) {
+        if(isspace(*(buf + charnum))) {
             ++charnum;
-        }
-        ndice_str[charnum] = '\0';
-        errno = 0;
-        d->ndice = strtol(ndice_str, NULL, 10);
-        if((errno == ERANGE && (d->ndice == LONG_MAX || d->ndice == LONG_MIN))
-            || d->ndice <= 0) {
-            printf("Invalid number of dice: %s\n", ndice_str);
-            printf("(Require: 0 < number of dice < %ld)\n", LONG_MAX);
-            return 1;
-        }
-    } else if(*(buf + charnum) == 'q') {
-        const int cmd_len = strlen("quit");
-        char quit_str[cmd_len + 1];
-        memset(quit_str, 0, cmd_len + 1);
-        int offset = charnum; // If whitespace was progressed through earlier, charnum is now offset from intra-word character place.
-        while(charnum - offset < cmd_len && isalpha(*(buf + charnum))) {
-            quit_str[charnum - offset] = *(buf + charnum);
-            ++charnum;
-        }
-        quit_str[charnum] = '\0';
-        if(0 != strncmp(quit_str, "quit", 5)) {
-            printf("\nUnknown command: %s\n", quit_str);
-            return 1;
-        }
-        // Okay, they said quit, but after this there shouldn't be anything else but whitespace.
-        while(isspace(*(buf + charnum))) {
-            ++charnum;
-        }
-        if(*(buf + charnum) == '\0') {
-            d->quit = true;
-            return 1;
         } else {
-            printf("Unexpected symbol: %c\n", *(buf + charnum));
-            return 1;
-        }
-    } else if(*(buf + charnum) == '\0') {
-        return 1;
-    } else {
-        printf("\nUnknown symbol in first character: %c (with hex encoding %x)\n", *(buf + charnum), *(buf + charnum));
-        return 1;
-    }
-
-    // If 'd' was prefixed with some number, there could be some extra whitespace to progress through;
-    // also check for invalid entries like "100 E 17".
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-    if(!(*(buf + charnum) == 'd' || *(buf + charnum) == 'D')) {
-        printf("Invalid symbol detected: %c\n", *(buf + charnum));
-        return 1;
-    } else {
-        ++charnum;
-    }
-
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    // Grab the number of sides.
-    if(isdigit(*(buf + charnum))) {
-        char nsides_str[LONG_MAX_STR_LEN + 1];
-        memset(nsides_str, 0, LONG_MAX_STR_LEN + 1);
-        int offset = charnum;
-        while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-            nsides_str[charnum - offset] = *(buf + charnum);
-            ++charnum;
-        }
-        nsides_str[charnum] = '\0';
-        errno = 0;
-        d->nsides = strtol(nsides_str, NULL, 10);
-        if((errno == ERANGE && (d->nsides == LONG_MAX || d->nsides == LONG_MIN))
-            || d->nsides <= 1) {
-            printf("Invalid number of sides: %s\n", nsides_str);
-            printf("(Require: 1 < number of dice < %ld)\n", LONG_MAX);
-            return 1;
-        }
-    } else {
-        printf("\nUnknown symbol in number of dice specification: %c (with hex encoding %x)\n", *(buf + charnum), *(buf + charnum));
-        return 1;
-    }
-
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    switch(*(buf + charnum)) {
-        case '\0':
-            {
-                return 0;
-            }
-            break;
-        case '+': case '-':
-            {
-                int mult = *(buf + charnum) == '-' ? -1 : 1;
-                ++charnum;
-                while(isspace(*(buf + charnum))) {
-                    ++charnum;
-                }
-                if(isdigit(*(buf + charnum))) {
-                    char shift_str[LONG_MAX_STR_LEN + 1];
-                    memset(shift_str, 0, LONG_MAX_STR_LEN + 1);
-                    int offset = charnum;
-                    while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-                        shift_str[charnum - offset] = *(buf + charnum);
+            switch(*(buf + charnum)) {
+                case 'd': case 'D': case '+': case '-':
+                    {
+                        t[*tokens_found].type = operator;
+                        t[*tokens_found].op = *(buf + charnum);
                         ++charnum;
                     }
-                    shift_str[charnum] = '\0';
-                    errno = 0;
-                    d->shift = strtol(shift_str, NULL, 10);
-                    if((errno == ERANGE && (d->shift == LONG_MAX || d->shift == LONG_MIN))
-                        || (errno != 0 && d->shift == 0)) {
-                        printf("Invalid addition/subtraction value: %s%s\n", mult == -1 ? "-" : "", shift_str);
-                        return 1;
+                    break;
+                default:
+                    {
+                        char *tok_str;
+                        int offset = charnum;
+                        if(isdigit(*(buf + charnum))) {
+                            tok_str = malloc((LONG_MAX_STR_LEN + 1)*sizeof(char));
+                            if(!tok_str) {
+                                fprintf(stderr, "Error allocating memory.\n");
+                                exit(1);
+                            }
+                            memset(tok_str, 0, LONG_MAX_STR_LEN + 1);
+                            while(isdigit(*(buf + charnum)) && charnum - offset < LONG_MAX_STR_LEN) {
+                                tok_str[charnum - offset] = *(buf + charnum);
+                                ++charnum;
+                            }
+                            tok_str[charnum - offset] = '\0';
+                            errno = 0;
+                            long num = strtol(tok_str, NULL, 10);
+                            if((errno == ERANGE && (num == LONG_MAX || num == LONG_MIN))
+                                || (errno != 0 && num == 0)) {
+                                printf("Error converting string '%s' to number.\n", tok_str);
+                                return 1;
+                            }
+                            t[*tokens_found].type = number;
+                            t[*tokens_found].number = num;
+                        } else if(isalpha(*(buf + charnum))) {
+                            tok_str = malloc((CMD_MAX_STR_LEN + 1)*sizeof(char));
+                            if(!tok_str) {
+                                fprintf(stderr, "Error allocating memory.\n");
+                                exit(1);
+                            }
+                            memset(tok_str, 0, CMD_MAX_STR_LEN + 1);
+                            while(isalpha(*(buf + charnum)) && charnum - offset < CMD_MAX_STR_LEN) {
+                                tok_str[charnum - offset] = *(buf + charnum);
+                                ++charnum;
+                            }
+                            tok_str[charnum - offset] = '\0';
+                            t[*tokens_found].type = command;
+                            int cmd_num = 0;
+                            while(cmd_num < NUMBER_OF_DEFINED_COMMANDS) {
+                                if(0 == strncmp(tok_str, commands[cmd_num].cmd_str, CMD_MAX_STR_LEN)) {
+                                    t[*tokens_found].cmd = commands[cmd_num].cmd_code;
+                                }
+                                ++cmd_num;
+                            }
+                        } else {
+                            printf("Unknown token detected: %c\n", *(buf + charnum));
+                            return 1;
+                        }
+                        if(tok_str) {
+                            free(tok_str);
+                            tok_str = NULL;
+                        }
                     }
-                    d->shift *= mult;
-                } else {
-                    printf("\nUnknown symbol in number to %s roll: %c (with hex encoding %x)\n", mult == -1 ? "subtract from" : "add to", *(buf + charnum), *(buf + charnum));
-                    return 1;
-                }
             }
-            break;
-        default:
-            printf("Invalid symbol: %c\n", *(buf + charnum));
-            return 1;
+            (*tokens_found)++;
+        }
+    }
+    t[*tokens_found].type = end;
+    ++(*tokens_found);
+    return 0;
+}
+
+typedef enum state_t {
+    error = -1,
+    start = 0,
+    recv_num_dice,      // Always number
+    recv_d,             // Always operator 'd'/'D'
+    recv_num_sides,     // Always followed by number
+    recv_shift_dir,     // Always operator '+'/'-'
+    recv_shift_amount,  // Always number
+    recv_cmd,           // Always string
+    finish
+} state_t;
+
+/*
+    Valid state transitions:
+        start               -> recv_num_dice, recv_d, recv_cmd, finish
+        recv_num_dice       -> recv_d, error
+        recv_d              -> recv_num_sides, error
+        recv_num_sides      -> recv_shift_dir, finish, error
+        recv_shift_dir      -> recv_shift_amount, error
+        recv_shift_amount   -> finish
+        recv_cmd            -> finish, error
+*/
+
+int parse(struct roll_encoding *d, const char *buf, const size_t len) {
+    int tokens_found = 0;
+    struct token t[len];
+    int toknum;
+    for(toknum = 0; toknum < len; ++toknum) {
+        token_init(&(t[toknum]));
+    }
+    int lex_err = lex(t, &tokens_found, buf, len);
+    if(lex_err != 0) {
+        return lex_err;
     }
 
-    // Everything else should be whitespace until '\0'.
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
+    state_t s = start;
+    dice_init(d);
+    for(toknum = 0; toknum < tokens_found && !(s == finish || s == error); ++toknum) {
+        switch(t[toknum].type) {
+            case none:
+                s = error;
+                break;
+            case number:
+                switch(s) {
+                    case start:
+                        s = recv_num_dice;
+                        d->ndice = t[toknum].number;
+                        break;
+                    case recv_d:
+                        s = recv_num_sides;
+                        d->nsides = t[toknum].number;
+                        break;
+                    case recv_shift_dir:
+                        s = recv_shift_amount;
+                        d->shift *= t[toknum].number;
+                        break;
+                    default:
+                        s = error;
+                }
+                break;
+            case operator:
+                switch(s) {
+                    case start: case recv_num_dice:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                if(s == start) {
+                                    d->ndice = 1;
+                                }
+                                s = recv_d;
+                                break;
+                            default:
+                                s = error;
+                        }
+                        break;
+                    case recv_num_sides:
+                        switch(t[toknum].op) {
+                            case '+': case '-':
+                                s = recv_shift_dir;
+                                d->shift = t[toknum].op == '+' ? 1 : -1;
+                                break;
+                            default:
+                                s = error;
+                        }
+                        break;
+                    default:
+                        s = error;
+                }
+                break;
+            case command:
+                switch(s) {
+                    case start:
+                        s = recv_cmd;
+                        switch(t[toknum].cmd) {
+                            case quit:
+                                d->quit = true;
+                                break;
+                            default:
+                                s = error;
+                        }
+                        break;
+                    default:
+                        s = error;
+                }
+                break;
+            case end:
+                switch(s) {
+                    case recv_num_sides: case recv_shift_amount: case recv_cmd:
+                        s = finish;
+                        break;
+                    default:
+                        s = error;
+                }
+                break;
+            default:
+                s = error;
+        }
     }
-    if(*(buf + charnum) != '\0') {
-        printf("Invalid character following dice expression: %c\n", *(buf + charnum));
+    if(s == finish) {
+        return 0;
+    } else {
         return 1;
     }
-
-    return 0;
 }
 
 double runif() {
@@ -214,7 +297,8 @@ void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
         return;
     }
     size_t bufsize = strlen(line);
-    if(0 == parse(d, line, bufsize)) {
+    int parse_success = parse(d, line, bufsize);
+    if(0 == parse_success) {
         roll(d);
         add_history(line);
     }
@@ -236,13 +320,6 @@ void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     free(line);
 }
 
-void dice_init(struct roll_encoding *d) {
-    d->ndice = 0;
-    d->nsides = 0;
-    d->shift = 0;
-    d->quit = false;
-}
-
 int main(int argc, char** argv) {
     rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
 
@@ -253,9 +330,15 @@ int main(int argc, char** argv) {
     } else {
         args.mode = PIPE;
     }
-    args.seed = 0;
     args.ist = stdin;
+
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    args.seed = t.tv_nsec * t.tv_sec;
+
     argp_parse(&argp, argc, argv, 0, 0, &args);
+
+    srandom(args.seed);
 
     struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
     if(!d) {

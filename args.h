@@ -63,10 +63,6 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
                     fprintf(stderr, "Error %d setting seed.\n", errno);
                     return 1;
                 }
-                struct timespec t;
-                clock_gettime(CLOCK_REALTIME, &t);
-                arguments->seed = t.tv_nsec * t.tv_sec;
-                srandom(arguments->seed);
             }
             break;
         case ARGP_KEY_ARG:
