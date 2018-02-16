@@ -19,6 +19,7 @@ const char *argp_program_version = "Dice 0.1";
 const char *argp_program_bug_address = "cryptarch@github";
 
 struct roll_encoding {
+    long nreps;
     long ndice;
     long nsides;
     long shift;
@@ -26,6 +27,7 @@ struct roll_encoding {
 };
 
 void dice_init(struct roll_encoding *d) {
+    d->nreps = 1;
     d->ndice = 0;
     d->nsides = 0;
     d->shift = 0;
@@ -77,7 +79,7 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
             ++charnum;
         } else {
             switch(*(buf + charnum)) {
-                case 'd': case 'D': case '+': case '-':
+                case 'd': case 'D': case '+': case '-': case 'x':
                     {
                         t[*tokens_found].type = operator;
                         t[*tokens_found].op = *(buf + charnum);
@@ -150,9 +152,11 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
 typedef enum state_t {
     error = -1,
     start = 0,
+    operator_pending,   // Always number
+    recv_x,             // Always operator 'x'
     recv_num_dice,      // Always number
     recv_d,             // Always operator 'd'/'D'
-    recv_num_sides,     // Always followed by number
+    recv_num_sides,     // Always number
     recv_shift_dir,     // Always operator '+'/'-'
     recv_shift_amount,  // Always number
     recv_cmd,           // Always string
@@ -166,6 +170,12 @@ void print_state_name(const state_t s) {
             break;
         case start:
             printf("start");
+            break;
+        case operator_pending:
+            printf("operator_pending");
+            break;
+        case recv_x:
+            printf("recv_x");
             break;
         case recv_num_dice:
             printf("recv_num_dice");
@@ -195,7 +205,9 @@ void print_state_name(const state_t s) {
 
 /*
     Valid state transitions:
-        start               -> recv_num_dice, recv_d, recv_cmd, finish
+        start               -> operator_pending, recv_d, recv_cmd, finish
+        operator_pending    -> recv_x, recv_d, error
+        recv_x              -> recv_num_dice, recv_d, error
         recv_num_dice       -> recv_d, error
         recv_d              -> recv_num_sides, error
         recv_num_sides      -> recv_shift_dir, finish, error
@@ -218,6 +230,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
 
     state_t s = start;
     dice_init(d);
+    int tmp = 0;
     for(toknum = 0; toknum < tokens_found && !(s == finish || s == error); ++toknum) {
         switch(t[toknum].type) {
             case none:
@@ -227,6 +240,10 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
             case number:
                 switch(s) {
                     case start:
+                        s = operator_pending;
+                        tmp = t[toknum].number;
+                        break;
+                    case recv_x:
                         s = recv_num_dice;
                         d->ndice = t[toknum].number;
                         break;
@@ -247,12 +264,39 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                 break;
             case operator:
                 switch(s) {
-                    case start: case recv_num_dice:
+                    case start:
                         switch(t[toknum].op) {
                             case 'd': case 'D':
-                                if(s == start) {
-                                    d->ndice = 1;
-                                }
+                                d->ndice = 1;
+                                s = recv_d;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case operator_pending:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                d->ndice = tmp;
+                                s = recv_d;
+                                break;
+                            case 'x':
+                                d->nreps = tmp;
+                                s = recv_x;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_num_dice:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
                                 s = recv_d;
                                 break;
                             default:
@@ -339,12 +383,21 @@ long single_dice_outcome(long sides) {
 }
 
 void roll(const struct roll_encoding *d) {
-    long result = d->shift;
-    int roll_num;
-    for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
-        result += single_dice_outcome(d->nsides);
+    long result[d->nreps];
+    memset(result, 0, (d->nreps)*sizeof(long));
+    int rep;
+    for(rep = 0; rep < d->nreps; ++rep) {
+        result[rep] = d->shift;
+        int roll_num;
+        for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
+            result[rep] += single_dice_outcome(d->nsides);
+        }
     }
-    printf("%ld\n", result);
+    printf("%ld", result[0]);
+    for(rep = 1; rep < d->nreps; ++rep) {
+        printf(" %ld", result[rep]);
+    }
+    printf("\n");
 }
 
 void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
