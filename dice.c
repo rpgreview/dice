@@ -366,6 +366,10 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                 break;
             case end:
                 switch(s) {
+                    case start:
+                        s = finish;
+                        return 1;
+                        break;
                     case recv_num_sides: case recv_shift_amount: case recv_cmd:
                         s = finish;
                         break;
