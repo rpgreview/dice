@@ -13,7 +13,7 @@ Usage: dice [-?hV] [-p STRING] [-s NUMBER] [--prompt=STRING] [--seed=NUMBER]
 Dice -- An interpreter for standard dice notation (qv Wikipedia:Dice_notation)
 
   -p, --prompt=STRING        Set the dice interactive prompt to STRING.
-                             (Default: '>')
+                             (Default: 'dice> ')
   -s, --seed=NUMBER          Set the seed to NUMBER. (Default is based on
                              current time.)
   -?, --help                 Give this help list

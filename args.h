@@ -26,7 +26,7 @@ struct arguments {
    Order of fields: {NAME, KEY, ARG, FLAGS, DOC}.
 */
 static struct argp_option options[] = {
-    {"prompt",  'p', "STRING", 0, "Set the dice interactive prompt to STRING.\n(Default: '>')"},
+    {"prompt",  'p', "STRING", 0, "Set the dice interactive prompt to STRING.\n(Default: 'dice> ')"},
     {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is based on current time.)"},
     {"help", 'h', NULL, 0, "Print this help message."},
     {0}
