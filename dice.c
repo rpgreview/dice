@@ -254,8 +254,13 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                         d->ndice = t[toknum].number;
                         break;
                     case recv_d:
-                        s = recv_num_sides;
-                        d->nsides = t[toknum].number;
+                        if(t[toknum].number > RAND_MAX) {
+                            s = error;
+                            printf("The maximum number of sides a dice can have is %d (RAND_MAX).\n", RAND_MAX);
+                        } else {
+                            s = recv_num_sides;
+                            d->nsides = t[toknum].number;
+                        }
                         break;
                     case recv_shift_dir:
                         s = recv_shift_amount;
