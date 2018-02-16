@@ -91,7 +91,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
    A description of the non-option command-line arguments
      that we accept.
 */
-static char args_doc[] = "[command | file]";
+static char args_doc[] = "[file]";
 
 /*
   DOC.  Field 4 in ARGP.
