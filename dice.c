@@ -103,6 +103,11 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                                 tok_str[charnum - offset] = *(buf + charnum);
                                 ++charnum;
                             }
+                            if(charnum - offset >= LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
+                                printf("Invalid numeric input detected. The maximum number allowed is %ld (LONG_MAX).\n", LONG_MAX);
+                                free(tok_str);
+                                return 1;
+                            }
                             tok_str[charnum - offset] = '\0';
                             errno = 0;
                             long num = strtol(tok_str, NULL, 10);
