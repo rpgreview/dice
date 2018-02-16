@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <time.h>
 #include <math.h>
+#include <signal.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -17,6 +18,11 @@
 
 const char *argp_program_version = "Dice 0.1";
 const char *argp_program_bug_address = "cryptarch@github";
+
+bool break_print_loop = false;
+void sigint_handler(int sig) {
+    break_print_loop = true;
+}
 
 struct roll_encoding {
     long nreps;
@@ -412,11 +418,16 @@ long single_dice_outcome(long sides) {
 }
 
 void roll(const struct roll_encoding *d) {
+    signal(SIGINT, sigint_handler);
+    break_print_loop = false;
     int rep;
     for(rep = 0; rep < d->nreps; ++rep) {
         long result = d->shift;
         int roll_num;
         for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
+            if(break_print_loop) {
+                break;
+            }
             result += single_dice_outcome(d->nsides);
         }
         if(rep != 0) {
