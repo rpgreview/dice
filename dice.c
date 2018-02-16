@@ -77,6 +77,8 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
     while(*(buf + charnum) != '\0' && charnum <= len) {
         if(isspace(*(buf + charnum))) {
             ++charnum;
+        } else if(*(buf + charnum) == '#') { //comment detected
+            break;
         } else {
             switch(*(buf + charnum)) {
                 case 'd': case 'D': case '+': case '-': case 'x':
