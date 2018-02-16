@@ -159,6 +159,40 @@ typedef enum state_t {
     finish
 } state_t;
 
+void print_state_name(const state_t s) {
+    switch(s) {
+        case error:
+            printf("error");
+            break;
+        case start:
+            printf("start");
+            break;
+        case recv_num_dice:
+            printf("recv_num_dice");
+            break;
+        case recv_d:
+            printf("recv_d");
+            break;
+        case recv_num_sides:
+            printf("recv_num_sides");
+            break;
+        case recv_shift_dir:
+            printf("recv_shift_dir");
+            break;
+        case recv_shift_amount:
+            printf("recv_shift_amount");
+            break;
+        case recv_cmd:
+            printf("recv_cmd");
+            break;
+        case finish:
+            printf("finish");
+            break;
+        default:
+            printf("undefined");
+    }
+}
+
 /*
     Valid state transitions:
         start               -> recv_num_dice, recv_d, recv_cmd, finish
@@ -188,6 +222,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
         switch(t[toknum].type) {
             case none:
                 s = error;
+                printf("Nothing to do.\n");
                 break;
             case number:
                 switch(s) {
@@ -204,6 +239,9 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                         d->shift *= t[toknum].number;
                         break;
                     default:
+                        printf("Cannot process number '%ld' while in state '", t[toknum].number);
+                        print_state_name(s);
+                        printf("'\n");
                         s = error;
                 }
                 break;
@@ -218,6 +256,9 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                                 s = recv_d;
                                 break;
                             default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
                                 s = error;
                         }
                         break;
@@ -228,10 +269,16 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                                 d->shift = t[toknum].op == '+' ? 1 : -1;
                                 break;
                             default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
                                 s = error;
                         }
                         break;
                     default:
+                        printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                        print_state_name(s);
+                        printf("'\n");
                         s = error;
                 }
                 break;
@@ -244,6 +291,9 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                                 d->quit = true;
                                 break;
                             default:
+                                printf("Cannot process command '%s' while in state '", commands[t[toknum].cmd].cmd_str);
+                                print_state_name(s);
+                                printf("'\n");
                                 s = error;
                         }
                         break;
@@ -257,16 +307,25 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                         s = finish;
                         break;
                     default:
+                        printf("Cannot process end token while in state '");
+                        print_state_name(s);
+                        printf("'\n");
                         s = error;
                 }
                 break;
             default:
+                printf("Unknown token type '%d' detected while in state '", t[toknum].type);
+                print_state_name(s);
+                printf("'\n");
                 s = error;
         }
     }
-    if(s == finish) {
+    if(s == finish && !d->quit) {
         return 0;
     } else {
+        if(s == error) {
+            dice_init(d);
+        }
         return 1;
     }
 }
