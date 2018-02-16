@@ -109,6 +109,10 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                                 printf("Error converting string '%s' to number.\n", tok_str);
                                 return 1;
                             }
+                            long lim = pow(2, 19);
+                            if(num > lim) {
+                                printf("This software does not support numbers larger than %ld\n", lim);
+                            }
                             t[*tokens_found].type = number;
                             t[*tokens_found].number = num;
                         } else if(isalpha(*(buf + charnum))) {
@@ -489,7 +493,9 @@ int main(int argc, char** argv) {
     do {
         process_next_line(d, &args);
     } while(!(d->quit || feof(args.ist)));
-    free(d);
-    d = NULL;
+    if(d) {
+        free(d);
+        d = NULL;
+    }
     return 0;
 }
