@@ -466,9 +466,19 @@ int main(int argc, char** argv) {
     }
     args.ist = stdin;
 
-    struct timespec t;
-    clock_gettime(CLOCK_REALTIME, &t);
-    args.seed = t.tv_nsec * t.tv_sec;
+
+    FILE *rnd_src;
+    char rnd_src_path[] = "/dev/urandom";
+    rnd_src = fopen(rnd_src_path, "r");
+    if(rnd_src) {
+        fread(&args.seed, sizeof(args.seed), 1, rnd_src);
+        fclose(rnd_src);
+    } else {
+        fprintf(stderr, "Problem opening %s for reading, falling back to time-based random seeding.\n", rnd_src_path);
+        struct timespec t;
+        clock_gettime(CLOCK_REALTIME, &t);
+        args.seed = t.tv_nsec * t.tv_sec;
+    }
 
     argp_parse(&argp, argc, argv, 0, 0, &args);
 

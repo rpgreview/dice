@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <argp.h>
 #include <unistd.h>
-#include <time.h>
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
@@ -17,7 +16,7 @@ typedef enum invocation_type {
 struct arguments {
     char *prompt;
     invocation_type mode;
-    long seed;
+    unsigned int seed;
     FILE *ist;
 };
 
