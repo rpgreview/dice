@@ -406,19 +406,17 @@ long single_dice_outcome(long sides) {
 }
 
 void roll(const struct roll_encoding *d) {
-    long result[d->nreps];
-    memset(result, 0, (d->nreps)*sizeof(long));
     int rep;
     for(rep = 0; rep < d->nreps; ++rep) {
-        result[rep] = d->shift;
+        long result = d->shift;
         int roll_num;
         for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
-            result[rep] += single_dice_outcome(d->nsides);
+            result += single_dice_outcome(d->nsides);
         }
-    }
-    printf("%ld", result[0]);
-    for(rep = 1; rep < d->nreps; ++rep) {
-        printf(" %ld", result[rep]);
+        if(rep != 0) {
+            printf(" ");
+        }
+        printf("%ld", result);
     }
     printf("\n");
 }
