@@ -1,4 +1,9 @@
-.PHONY: all
+.PHONY: all check
 
-all:
+all: dice
+
+dice:
 	gcc -Wall -o dice -lm -lreadline dice.c
+
+check: dice
+	./tests/dice-test.sh
