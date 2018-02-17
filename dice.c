@@ -16,7 +16,7 @@
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
-const char *argp_program_version = "Dice 0.1";
+const char *argp_program_version = "Dice 0.2";
 const char *argp_program_bug_address = "cryptarch@github";
 
 bool break_print_loop = false;
@@ -458,8 +458,12 @@ void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
 void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     size_t bufsize = 0;
     char *line = NULL;
-    getline(&line, &bufsize, args->ist);
-    if(line == NULL || line == 0 || feof(args->ist)) {
+    errno = 0;
+    int getline_retval = getline(&line, &bufsize, args->ist);
+    if(line == NULL || line == 0 || feof(args->ist) || errno != 0 || getline_retval < 0) {
+        if(errno != 0) {
+            printf("Error %d (%s) getting line for reading.\n", errno, strerror(errno));
+        }
         d->quit = true;
         free(line);
         return;
@@ -468,6 +472,10 @@ void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
         roll(d);
     }
     free(line);
+}
+
+void no_read(struct roll_encoding *d, struct arguments *args) {
+    printf("Unknown mode. Not reading any lines.\n");
 }
 
 int main(int argc, char** argv) {
@@ -484,10 +492,15 @@ int main(int argc, char** argv) {
     FILE *rnd_src;
     char rnd_src_path[] = "/dev/urandom";
     rnd_src = fopen(rnd_src_path, "r");
+    bool seed_set = false;
     if(rnd_src) {
-        fread(&args.seed, sizeof(args.seed), 1, rnd_src);
+        int fread_num_items = fread(&args.seed, sizeof(args.seed), 1, rnd_src);
+        if(fread_num_items > 0) {
+            seed_set = true;
+        }
         fclose(rnd_src);
-    } else {
+    }
+    if(!seed_set) {
         fprintf(stderr, "Problem opening %s for reading, falling back to time-based random seeding.\n", rnd_src_path);
         struct timespec t;
         clock_gettime(CLOCK_REALTIME, &t);
@@ -518,6 +531,8 @@ int main(int argc, char** argv) {
                 process_next_line = &getline_wrapper;
             }
             break;
+        default:
+            process_next_line = &no_read;
     }
 
     do {
