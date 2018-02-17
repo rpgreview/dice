@@ -4,7 +4,7 @@
 ./dice <<< "5x 7d8 + 23"
 ./dice ./tests/testing.dice
 hash valgrind 2> /dev/null \
-    && valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes \
+    && valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --show-reachable=no --track-origins=yes \
     dice ./tests/testing.dice
 
 hash datamash 2>/dev/null \
