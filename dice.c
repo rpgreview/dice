@@ -489,22 +489,23 @@ int main(int argc, char** argv) {
     FILE *rnd_src;
     char rnd_src_path[] = "/dev/urandom";
     rnd_src = fopen(rnd_src_path, "r");
-    bool seed_set = false;
+    args.seed_set = false;
     if(rnd_src) {
         int fread_num_items = fread(&args.seed, sizeof(args.seed), 1, rnd_src);
         if(fread_num_items > 0) {
-            seed_set = true;
+            args.seed_set = true;
         }
         fclose(rnd_src);
     }
-    if(!seed_set) {
-        fprintf(stderr, "Problem opening %s for reading, falling back to time-based random seeding.\n", rnd_src_path);
+
+    argp_parse(&argp, argc, argv, 0, 0, &args);
+
+    if(!args.seed_set) {
+        fprintf(stderr, "Problem opening %s for reading and/or seed not given, falling back to a time-based random seed.\n", rnd_src_path);
         struct timespec t;
         clock_gettime(CLOCK_REALTIME, &t);
         args.seed = t.tv_nsec * t.tv_sec;
     }
-
-    argp_parse(&argp, argc, argv, 0, 0, &args);
 
     srandom(args.seed);
 

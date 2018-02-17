@@ -5,9 +5,10 @@
 #include <stdbool.h>
 #include <argp.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <errno.h>
 
-const char *argp_program_version = "Dice 0.2";
+const char *argp_program_version = "Dice 0.3";
 const char *argp_program_bug_address = "cryptarch@github";
 
 typedef enum invocation_type {
@@ -21,6 +22,7 @@ struct arguments {
     char *prompt;
     invocation_type mode;
     unsigned int seed;
+    bool seed_set;
     FILE *ist;
 };
 
@@ -59,13 +61,23 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             break;
         case 's':
             {
+                char *arg_iter;
+                for(arg_iter = arg; *arg_iter != '\0'; ++arg_iter) {
+                    if(!isdigit(*arg_iter)) {
+                        fprintf(stderr, "The random seed must be a number between 0 and %u.\n", UINT_MAX);
+                        exit(1);
+                    }
+                }
                 char *s_endptr;
                 errno = 0;
                 arguments->seed = strtol(arg, &s_endptr, 10);
                 if((errno == ERANGE && (arguments->seed == LONG_MAX || arguments->seed == LONG_MIN))
                     || (errno != 0 && arguments->seed == 0)) {
-                    fprintf(stderr, "Error %d (%s) setting seed.\n", errno, strerror(errno));
+                    fprintf(stderr, "Error %d (%s) setting seed to %s.\n", errno, strerror(errno), arg);
+                    arguments->seed_set = false;
                     return 1;
+                } else {
+                    arguments->seed_set = true;
                 }
             }
             break;
@@ -79,7 +91,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
             {
                 {
                     arguments->mode = SCRIPTED;
-                    if(0 != strcmp(arg, "-")) { 
+                    if(0 != strcmp(arg, "-")) {
                         errno = 0;
                         arguments->ist = fopen(arg, "r");
                         if(arguments->ist == NULL) {
