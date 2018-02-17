@@ -94,6 +94,11 @@ dice> quit
 $
 ```
 
+Interactive use incorporates the [GNU readline library](https://tiswww.case.edu/php/chet/readline/rltop.html).
+This means you can customise the prompt, even with ANSI-escape style colours,
+and cycle through history using the up and down arrow keys
+(although history is currently not stored between sessions).
+
 
 Installation
 ----
@@ -107,3 +112,16 @@ For now you still have to use standard Unix tools:
 $ make
 $ ln -svf $PWD/dice ~/bin/
 ```
+
+
+Contributing
+----
+
+Discussion and pull requests covering the following would be welcome:
+
+* Bug fixes
+* Performance enhancements
+* Sensible extensions to the syntax (sensible = it should be useful and have a clear meaning)
+* Cleaner and more robust methods for parsing the syntax
+* Storing history between sessions
+* Establishing a `~/.dicerc` file or such for things like customising the prompt, controlling the behaviour of history, etc.
