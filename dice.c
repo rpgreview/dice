@@ -16,9 +16,6 @@
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
-const char *argp_program_version = "Dice 0.2";
-const char *argp_program_bug_address = "cryptarch@github";
-
 bool break_print_loop = false;
 void sigint_handler(int sig) {
     break_print_loop = true;
