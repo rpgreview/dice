@@ -457,7 +457,7 @@ void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
 
 void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     size_t bufsize = 0;
-    char *line;
+    char *line = NULL;
     getline(&line, &bufsize, args->ist);
     if(line == NULL || line == 0 || feof(args->ist)) {
         d->quit = true;
