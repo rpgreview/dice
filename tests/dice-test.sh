@@ -1,0 +1,10 @@
+#! /bin/bash
+
+./dice <<< 3d6
+./dice <<< "5x 7d8 + 23"
+./dice ./tests/testing.dice
+
+for att in STR DEX CON INT WIS CHA; do
+    printf "%s: " $att
+    echo "4x d6" | ./dice | xargs -n1 | sort | tail --lines=+2 | datamash sum 1
+done

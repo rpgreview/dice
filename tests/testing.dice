@@ -1,0 +1,6 @@
+#! /bin/dice
+
+3d6
+5x 7d8 + 23
+
+quit
