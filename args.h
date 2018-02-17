@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <argp.h>
 #include <unistd.h>
+#include <errno.h>
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
@@ -59,7 +60,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
                 arguments->seed = strtol(arg, &s_endptr, 10);
                 if((errno == ERANGE && (arguments->seed == LONG_MAX || arguments->seed == LONG_MIN))
                     || (errno != 0 && arguments->seed == 0)) {
-                    fprintf(stderr, "Error %d setting seed.\n", errno);
+                    fprintf(stderr, "Error %d (%s) setting seed.\n", errno, strerror(errno));
                     return 1;
                 }
             }
@@ -72,7 +73,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
                         errno = 0;
                         arguments->ist = fopen(arg, "r");
                         if(arguments->ist == NULL) {
-                            fprintf(stderr, "Error %d opening file %s\n", errno, arg);
+                            fprintf(stderr, "Error %d (%s) opening file %s\n", errno, strerror(errno), arg);
                             exit(1);
                         }
                     }

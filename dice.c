@@ -119,7 +119,7 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                             long num = strtol(tok_str, NULL, 10);
                             if((errno == ERANGE && (num == LONG_MAX || num == LONG_MIN))
                                 || (errno != 0 && num == 0)) {
-                                printf("Error converting string '%s' to number.\n", tok_str);
+                                printf("Error %d (%s) converting string '%s' to number.\n", errno, strerror(errno), tok_str);
                                 return 1;
                             }
                             t[*tokens_found].type = number;
