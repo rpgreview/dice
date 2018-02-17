@@ -3,7 +3,7 @@
 all: dice
 
 dice:
-	gcc -Wall -o dice -lm -lreadline dice.c
+	gcc -O2 -D_FORTIFY_SOURCE -Wl,-z,relro -Wl,-z,now -Wall -flto -o dice -lm -lreadline dice.c
 
 check: dice
 	./tests/dice-test.sh
