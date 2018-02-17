@@ -1,4 +1,4 @@
-.PHONY: all check
+.PHONY: all check clean
 
 all: dice
 
@@ -7,3 +7,6 @@ dice:
 
 check: dice
 	./tests/dice-test.sh
+
+clean:
+	rm -vf ./dice
