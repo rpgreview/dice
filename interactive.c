@@ -46,6 +46,9 @@ void read_history_wrapper(const char *filename) {
         switch(errno) {
             case 0:
                 break;
+            case 2:
+                // Ignore missing file error, it just means we're running interactively for the first time.
+                break;
             default:
                 fprintf(stderr, "Error %d (%s) opening %s for reading.\n", errno, strerror(errno), path[path_num]);
         }
