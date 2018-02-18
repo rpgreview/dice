@@ -83,7 +83,7 @@ void write_history_wrapper(const char *filename) {
                    write_history emits an erroneous "Invalid argument"
                    despite successfully replacing history file contents.
                 */
-                break; 
+                break;
             default:
                 fprintf(stderr, "Error %d (%s) opening %s for writing.\n", errno, strerror(errno), path[path_num]);
         }

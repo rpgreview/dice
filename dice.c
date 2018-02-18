@@ -12,7 +12,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-const char *argp_program_version = "Dice 0.3";
+const char *argp_program_version = "Dice 0.4";
 const char *argp_program_bug_address = "cryptarch@github";
 
 #include "args.h"
