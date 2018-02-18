@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <time.h>
 #include <math.h>
+#include <signal.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -15,177 +16,394 @@
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
-const char *argp_program_version = "Dice 0.1";
-const char *argp_program_bug_address = "cryptarch@github";
+bool break_print_loop = false;
+void sigint_handler(int sig) {
+    break_print_loop = true;
+}
 
 struct roll_encoding {
+    long nreps;
     long ndice;
     long nsides;
     long shift;
     bool quit;
 };
 
-int parse(struct roll_encoding *d, const char *buf, const size_t len) {
+void dice_init(struct roll_encoding *d) {
+    d->nreps = 1;
     d->ndice = 0;
     d->nsides = 0;
     d->shift = 0;
     d->quit = false;
+}
 
+typedef enum token_t {
+    none = 0,
+    number,
+    operator,
+    command,
+    end
+} token_t;
+
+typedef enum cmd_t {
+    quit
+} cmd_t;
+
+struct cmd_map {
+    cmd_t cmd_code;
+    char cmd_str[8];
+};
+
+struct cmd_map commands[] = {
+    { quit, { "quit" } }
+};
+#define NUMBER_OF_DEFINED_COMMANDS 1
+#define CMD_MAX_STR_LEN 4
+
+struct token {
+    token_t type;
+    long number;
+    char op;
+    cmd_t cmd;
+};
+
+void token_init(struct token *t) {
+    t->type = none;
+    t->number = 0;
+    t->op = '?';
+    t->cmd = -1;
+}
+
+int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
     int charnum = 0;
-
-    // First eliminate any leading whitespace.
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    // The non-whitespace part of buf should begin with 'd' or 'D', optionally prefixed by number of dice (default: 1)
-    // Also offer quit command.
-    // Also don't complain about empty lines.
-    if(*(buf + charnum) == 'd' || *(buf + charnum) == 'D') {
-        d->ndice = 1;
-    } else if(isdigit(*(buf + charnum))) {
-        char ndice_str[LONG_MAX_STR_LEN + 1];
-        memset(ndice_str, 0, LONG_MAX_STR_LEN + 1);
-        int offset = charnum; // If whitespace was progressed through earlier, charnum is now offset from current digit.
-        while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-            ndice_str[charnum - offset] = *(buf + charnum);
+    *tokens_found = 0;
+    while(*(buf + charnum) != '\0' && charnum <= len) {
+        if(isspace(*(buf + charnum))) {
             ++charnum;
-        }
-        ndice_str[charnum] = '\0';
-        errno = 0;
-        d->ndice = strtol(ndice_str, NULL, 10);
-        if((errno == ERANGE && (d->ndice == LONG_MAX || d->ndice == LONG_MIN))
-            || d->ndice <= 0) {
-            printf("Invalid number of dice: %s\n", ndice_str);
-            printf("(Require: 0 < number of dice < %ld)\n", LONG_MAX);
-            return 1;
-        }
-    } else if(*(buf + charnum) == 'q') {
-        const int cmd_len = strlen("quit");
-        char quit_str[cmd_len + 1];
-        memset(quit_str, 0, cmd_len + 1);
-        int offset = charnum; // If whitespace was progressed through earlier, charnum is now offset from intra-word character place.
-        while(charnum - offset < cmd_len && isalpha(*(buf + charnum))) {
-            quit_str[charnum - offset] = *(buf + charnum);
-            ++charnum;
-        }
-        quit_str[charnum] = '\0';
-        if(0 != strncmp(quit_str, "quit", 5)) {
-            printf("\nUnknown command: %s\n", quit_str);
-            return 1;
-        }
-        // Okay, they said quit, but after this there shouldn't be anything else but whitespace.
-        while(isspace(*(buf + charnum))) {
-            ++charnum;
-        }
-        if(*(buf + charnum) == '\0') {
-            d->quit = true;
-            return 1;
-        } else {
-            printf("Unexpected symbol: %c\n", *(buf + charnum));
-            return 1;
-        }
-    } else if(*(buf + charnum) == '\0') {
-        return 1;
-    } else {
-        printf("\nUnknown symbol in first character: %c (with hex encoding %x)\n", *(buf + charnum), *(buf + charnum));
-        return 1;
-    }
-
-    // If 'd' was prefixed with some number, there could be some extra whitespace to progress through;
-    // also check for invalid entries like "100 E 17".
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-    if(!(*(buf + charnum) == 'd' || *(buf + charnum) == 'D')) {
-        printf("Invalid symbol detected: %c\n", *(buf + charnum));
-        return 1;
-    } else {
-        ++charnum;
-    }
-
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    // Grab the number of sides.
-    if(isdigit(*(buf + charnum))) {
-        char nsides_str[LONG_MAX_STR_LEN + 1];
-        memset(nsides_str, 0, LONG_MAX_STR_LEN + 1);
-        int offset = charnum;
-        while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-            nsides_str[charnum - offset] = *(buf + charnum);
-            ++charnum;
-        }
-        nsides_str[charnum] = '\0';
-        errno = 0;
-        d->nsides = strtol(nsides_str, NULL, 10);
-        if((errno == ERANGE && (d->nsides == LONG_MAX || d->nsides == LONG_MIN))
-            || d->nsides <= 1) {
-            printf("Invalid number of sides: %s\n", nsides_str);
-            printf("(Require: 1 < number of dice < %ld)\n", LONG_MAX);
-            return 1;
-        }
-    } else {
-        printf("\nUnknown symbol in number of dice specification: %c (with hex encoding %x)\n", *(buf + charnum), *(buf + charnum));
-        return 1;
-    }
-
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
-    }
-
-    switch(*(buf + charnum)) {
-        case '\0':
-            {
-                return 0;
-            }
+        } else if(*(buf + charnum) == '#') { //comment detected
             break;
-        case '+': case '-':
-            {
-                int mult = *(buf + charnum) == '-' ? -1 : 1;
-                ++charnum;
-                while(isspace(*(buf + charnum))) {
-                    ++charnum;
-                }
-                if(isdigit(*(buf + charnum))) {
-                    char shift_str[LONG_MAX_STR_LEN + 1];
-                    memset(shift_str, 0, LONG_MAX_STR_LEN + 1);
-                    int offset = charnum;
-                    while(charnum - offset < LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
-                        shift_str[charnum - offset] = *(buf + charnum);
+        } else {
+            switch(*(buf + charnum)) {
+                case 'd': case 'D': case '+': case '-': case 'x':
+                    {
+                        t[*tokens_found].type = operator;
+                        t[*tokens_found].op = *(buf + charnum);
                         ++charnum;
                     }
-                    shift_str[charnum] = '\0';
-                    errno = 0;
-                    d->shift = strtol(shift_str, NULL, 10);
-                    if((errno == ERANGE && (d->shift == LONG_MAX || d->shift == LONG_MIN))
-                        || (errno != 0 && d->shift == 0)) {
-                        printf("Invalid addition/subtraction value: %s%s\n", mult == -1 ? "-" : "", shift_str);
-                        return 1;
+                    break;
+                default:
+                    {
+                        char *tok_str;
+                        int offset = charnum;
+                        if(isdigit(*(buf + charnum))) {
+                            tok_str = malloc((LONG_MAX_STR_LEN + 1)*sizeof(char));
+                            if(!tok_str) {
+                                fprintf(stderr, "Error allocating memory.\n");
+                                exit(1);
+                            }
+                            memset(tok_str, 0, LONG_MAX_STR_LEN + 1);
+                            while(isdigit(*(buf + charnum)) && charnum - offset < LONG_MAX_STR_LEN) {
+                                tok_str[charnum - offset] = *(buf + charnum);
+                                ++charnum;
+                            }
+                            if(charnum - offset >= LONG_MAX_STR_LEN && isdigit(*(buf + charnum))) {
+                                printf("Invalid numeric input detected. The maximum number allowed is %ld (LONG_MAX).\n", LONG_MAX);
+                                free(tok_str);
+                                return 1;
+                            }
+                            tok_str[charnum - offset] = '\0';
+                            errno = 0;
+                            long num = strtol(tok_str, NULL, 10);
+                            if((errno == ERANGE && (num == LONG_MAX || num == LONG_MIN))
+                                || (errno != 0 && num == 0)) {
+                                printf("Error %d (%s) converting string '%s' to number.\n", errno, strerror(errno), tok_str);
+                                return 1;
+                            }
+                            t[*tokens_found].type = number;
+                            t[*tokens_found].number = num;
+                        } else if(isalpha(*(buf + charnum))) {
+                            tok_str = malloc((CMD_MAX_STR_LEN + 1)*sizeof(char));
+                            if(!tok_str) {
+                                fprintf(stderr, "Error allocating memory.\n");
+                                exit(1);
+                            }
+                            memset(tok_str, 0, CMD_MAX_STR_LEN + 1);
+                            while(isalpha(*(buf + charnum)) && charnum - offset < CMD_MAX_STR_LEN) {
+                                tok_str[charnum - offset] = *(buf + charnum);
+                                ++charnum;
+                            }
+                            tok_str[charnum - offset] = '\0';
+                            t[*tokens_found].type = command;
+                            int cmd_num = 0;
+                            while(cmd_num < NUMBER_OF_DEFINED_COMMANDS) {
+                                if(0 == strncmp(tok_str, commands[cmd_num].cmd_str, CMD_MAX_STR_LEN)) {
+                                    t[*tokens_found].cmd = commands[cmd_num].cmd_code;
+                                }
+                                ++cmd_num;
+                            }
+                        } else {
+                            printf("Unknown token detected: %c\n", *(buf + charnum));
+                            return 1;
+                        }
+                        if(tok_str) {
+                            free(tok_str);
+                            tok_str = NULL;
+                        }
                     }
-                    d->shift *= mult;
-                } else {
-                    printf("\nUnknown symbol in number to %s roll: %c (with hex encoding %x)\n", mult == -1 ? "subtract from" : "add to", *(buf + charnum), *(buf + charnum));
-                    return 1;
-                }
             }
+            (*tokens_found)++;
+        }
+    }
+    t[*tokens_found].type = end;
+    ++(*tokens_found);
+    return 0;
+}
+
+typedef enum state_t {
+    error = -1,
+    start = 0,
+    operator_pending,   // Always number
+    recv_x,             // Always operator 'x'
+    recv_num_dice,      // Always number
+    recv_d,             // Always operator 'd'/'D'
+    recv_num_sides,     // Always number
+    recv_shift_dir,     // Always operator '+'/'-'
+    recv_shift_amount,  // Always number
+    recv_cmd,           // Always string
+    finish
+} state_t;
+
+void print_state_name(const state_t s) {
+    switch(s) {
+        case error:
+            printf("error");
+            break;
+        case start:
+            printf("start");
+            break;
+        case operator_pending:
+            printf("operator_pending");
+            break;
+        case recv_x:
+            printf("recv_x");
+            break;
+        case recv_num_dice:
+            printf("recv_num_dice");
+            break;
+        case recv_d:
+            printf("recv_d");
+            break;
+        case recv_num_sides:
+            printf("recv_num_sides");
+            break;
+        case recv_shift_dir:
+            printf("recv_shift_dir");
+            break;
+        case recv_shift_amount:
+            printf("recv_shift_amount");
+            break;
+        case recv_cmd:
+            printf("recv_cmd");
+            break;
+        case finish:
+            printf("finish");
             break;
         default:
-            printf("Invalid symbol: %c\n", *(buf + charnum));
-            return 1;
+            printf("undefined");
+    }
+}
+
+/*
+    Valid state transitions:
+        start               -> operator_pending, recv_d, recv_cmd, finish
+        operator_pending    -> recv_x, recv_d, error
+        recv_x              -> recv_num_dice, recv_d, error
+        recv_num_dice       -> recv_d, error
+        recv_d              -> recv_num_sides, error
+        recv_num_sides      -> recv_shift_dir, finish, error
+        recv_shift_dir      -> recv_shift_amount, error
+        recv_shift_amount   -> finish
+        recv_cmd            -> finish, error
+*/
+
+int parse(struct roll_encoding *d, const char *buf, const size_t len) {
+    int tokens_found = 0;
+    struct token t[len];
+    int toknum;
+    for(toknum = 0; toknum < len; ++toknum) {
+        token_init(&(t[toknum]));
+    }
+    int lex_err = lex(t, &tokens_found, buf, len);
+    if(lex_err != 0) {
+        return lex_err;
     }
 
-    // Everything else should be whitespace until '\0'.
-    while(isspace(*(buf + charnum))) {
-        ++charnum;
+    state_t s = start;
+    dice_init(d);
+    int tmp = 0;
+    for(toknum = 0; toknum < tokens_found && !(s == finish || s == error); ++toknum) {
+        switch(t[toknum].type) {
+            case none:
+                s = error;
+                printf("Nothing to do.\n");
+                break;
+            case number:
+                switch(s) {
+                    case start:
+                        s = operator_pending;
+                        tmp = t[toknum].number;
+                        break;
+                    case recv_x:
+                        s = recv_num_dice;
+                        d->ndice = t[toknum].number;
+                        break;
+                    case recv_d:
+                        if(t[toknum].number > RAND_MAX) {
+                            s = error;
+                            printf("The maximum number of sides a dice can have is %d (RAND_MAX).\n", RAND_MAX);
+                        } else {
+                            s = recv_num_sides;
+                            d->nsides = t[toknum].number;
+                        }
+                        break;
+                    case recv_shift_dir:
+                        s = recv_shift_amount;
+                        d->shift *= t[toknum].number;
+                        break;
+                    default:
+                        printf("Cannot process number '%ld' while in state '", t[toknum].number);
+                        print_state_name(s);
+                        printf("'\n");
+                        s = error;
+                }
+                break;
+            case operator:
+                switch(s) {
+                    case start:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                d->ndice = 1;
+                                s = recv_d;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case operator_pending:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                d->ndice = tmp;
+                                s = recv_d;
+                                break;
+                            case 'x':
+                                d->nreps = tmp;
+                                s = recv_x;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_x:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                d->ndice = 1;
+                                s = recv_d;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_num_dice:
+                        switch(t[toknum].op) {
+                            case 'd': case 'D':
+                                s = recv_d;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_num_sides:
+                        switch(t[toknum].op) {
+                            case '+': case '-':
+                                s = recv_shift_dir;
+                                d->shift = t[toknum].op == '+' ? 1 : -1;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    default:
+                        printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                        print_state_name(s);
+                        printf("'\n");
+                        s = error;
+                }
+                break;
+            case command:
+                switch(s) {
+                    case start:
+                        s = recv_cmd;
+                        switch(t[toknum].cmd) {
+                            case quit:
+                                d->quit = true;
+                                break;
+                            default:
+                                printf("Cannot process command '%s' while in state '", commands[t[toknum].cmd].cmd_str);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    default:
+                        s = error;
+                }
+                break;
+            case end:
+                switch(s) {
+                    case start:
+                        s = finish;
+                        return 1;
+                        break;
+                    case recv_num_sides: case recv_shift_amount: case recv_cmd:
+                        s = finish;
+                        break;
+                    default:
+                        printf("Cannot process end token while in state '");
+                        print_state_name(s);
+                        printf("'\n");
+                        s = error;
+                }
+                break;
+            default:
+                printf("Unknown token type '%d' detected while in state '", t[toknum].type);
+                print_state_name(s);
+                printf("'\n");
+                s = error;
+        }
     }
-    if(*(buf + charnum) != '\0') {
-        printf("Invalid character following dice expression: %c\n", *(buf + charnum));
+    if(s == finish && !d->quit) {
+        return 0;
+    } else {
+        if(s == error) {
+            dice_init(d);
+        }
         return 1;
     }
-
-    return 0;
 }
 
 double runif() {
@@ -197,12 +415,24 @@ long single_dice_outcome(long sides) {
 }
 
 void roll(const struct roll_encoding *d) {
-    long result = d->shift;
-    int roll_num;
-    for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
-        result += single_dice_outcome(d->nsides);
+    signal(SIGINT, sigint_handler);
+    break_print_loop = false;
+    int rep;
+    for(rep = 0; rep < d->nreps; ++rep) {
+        long result = d->shift;
+        int roll_num;
+        for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
+            if(break_print_loop) {
+                break;
+            }
+            result += single_dice_outcome(d->nsides);
+        }
+        if(rep != 0) {
+            printf(" ");
+        }
+        printf("%ld", result);
     }
-    printf("%ld\n", result);
+    printf("\n");
 }
 
 void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
@@ -214,7 +444,8 @@ void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
         return;
     }
     size_t bufsize = strlen(line);
-    if(0 == parse(d, line, bufsize)) {
+    int parse_success = parse(d, line, bufsize);
+    if(0 == parse_success) {
         roll(d);
         add_history(line);
     }
@@ -223,9 +454,13 @@ void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
 
 void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     size_t bufsize = 0;
-    char *line;
-    getline(&line, &bufsize, args->ist);
-    if(line == NULL || line == 0 || feof(args->ist)) {
+    char *line = NULL;
+    errno = 0;
+    int getline_retval = getline(&line, &bufsize, args->ist);
+    if(line == NULL || line == 0 || feof(args->ist) || errno != 0 || getline_retval < 0) {
+        if(errno != 0) {
+            printf("Error %d (%s) getting line for reading.\n", errno, strerror(errno));
+        }
         d->quit = true;
         free(line);
         return;
@@ -236,16 +471,11 @@ void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     free(line);
 }
 
-void dice_init(struct roll_encoding *d) {
-    d->ndice = 0;
-    d->nsides = 0;
-    d->shift = 0;
-    d->quit = false;
+void no_read(struct roll_encoding *d, struct arguments *args) {
+    printf("Unknown mode. Not reading any lines.\n");
 }
 
 int main(int argc, char** argv) {
-    rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
-
     struct arguments args;
     args.prompt = "\001\e[0;32m\002dice> \001\e[0m\002";
     if(isatty(fileno(stdin))) {
@@ -253,9 +483,31 @@ int main(int argc, char** argv) {
     } else {
         args.mode = PIPE;
     }
-    args.seed = 0;
     args.ist = stdin;
+
+
+    FILE *rnd_src;
+    char rnd_src_path[] = "/dev/urandom";
+    rnd_src = fopen(rnd_src_path, "r");
+    args.seed_set = false;
+    if(rnd_src) {
+        int fread_num_items = fread(&args.seed, sizeof(args.seed), 1, rnd_src);
+        if(fread_num_items > 0) {
+            args.seed_set = true;
+        }
+        fclose(rnd_src);
+    }
+
     argp_parse(&argp, argc, argv, 0, 0, &args);
+
+    if(!args.seed_set) {
+        fprintf(stderr, "Problem opening %s for reading and/or seed not given, falling back to a time-based random seed.\n", rnd_src_path);
+        struct timespec t;
+        clock_gettime(CLOCK_REALTIME, &t);
+        args.seed = t.tv_nsec * t.tv_sec;
+    }
+
+    srandom(args.seed);
 
     struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
     if(!d) {
@@ -268,6 +520,7 @@ int main(int argc, char** argv) {
     switch(args.mode) {
         case INTERACTIVE:
             {
+                rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
                 process_next_line = &readline_wrapper;
             }
             break;
@@ -276,12 +529,16 @@ int main(int argc, char** argv) {
                 process_next_line = &getline_wrapper;
             }
             break;
+        default:
+            process_next_line = &no_read;
     }
 
     do {
         process_next_line(d, &args);
     } while(!(d->quit || feof(args.ist)));
-    free(d);
-    d = NULL;
+    if(d) {
+        free(d);
+        d = NULL;
+    }
     return 0;
 }

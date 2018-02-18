@@ -1,4 +1,12 @@
-.PHONY: all
+.PHONY: all check clean
 
-all:
-	gcc -Wall -o dice -lm -lreadline dice.c
+all: dice
+
+dice:
+	gcc -O2 -D_FORTIFY_SOURCE -Wl,-z,relro -Wl,-z,now -Wall -flto -o dice -lm -lreadline dice.c
+
+check: dice
+	./tests/dice-test.sh
+
+clean:
+	rm -vf ./dice
