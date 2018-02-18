@@ -9,6 +9,7 @@
 #include <math.h>
 #include <signal.h>
 #include <termcap.h>
+#include <wordexp.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -73,7 +74,7 @@ void clear_screen() {
     char *str;
     str = tgetstr("cl", NULL);
     fputs(str, stdout);
-} 
+}
 
 struct token {
     token_t type;
@@ -508,6 +509,72 @@ void no_read(struct roll_encoding *d, struct arguments *args) {
     printf("Unknown mode. Not reading any lines.\n");
 }
 
+void read_history_wrapper(const char *filename) { // Does shell expansion of path before calling read_history, eg '~' = $HOME.
+    errno = 0;
+    wordexp_t matched_paths;
+    int we_ret = wordexp(filename, &matched_paths, 0);
+    switch(we_ret) {
+        case WRDE_NOSPACE:
+            {
+                fprintf(stderr, "Insufficient memory to expand path '%s'.\n", filename);
+            }
+            break;
+        default:
+            break;
+    }
+    char **path = matched_paths.we_wordv;
+    int path_num = 0;
+    for(path_num = 0; path_num < matched_paths.we_wordc; ++path_num) {
+        errno = 0;
+        read_history(path[path_num]);
+        switch(errno) {
+            case 0:
+                break;
+            default:
+                fprintf(stderr, "Error %d (%s) opening %s for reading.\n", errno, strerror(errno), path[path_num]);
+        }
+    }
+    wordfree(&matched_paths);
+}
+
+void write_history_wrapper(const char *filename) { // Does shell expansion of path before calling write_history, eg '~' = $HOME.
+    errno = 0;
+    wordexp_t matched_paths;
+    int we_ret = wordexp(filename, &matched_paths, 0);
+    switch(we_ret) {
+        case WRDE_NOSPACE:
+            {
+                fprintf(stderr, "Insufficient memory to expand path '%s'.\n", filename);
+            }
+            break;
+        default:
+            break;
+    }
+    char **path = matched_paths.we_wordv;
+    int path_num = 0;
+    for(path_num = 0; path_num < matched_paths.we_wordc; ++path_num) {
+        errno = 0;
+        write_history(path[path_num]);
+        switch(errno) {
+            case 0:
+                break;
+            case 2:
+                fprintf(stderr, "Created new history file '%s'.\n", path[path_num]);
+                break;
+            case 22:
+                /*
+                   It seems that when the history file already exists,
+                   write_history emits an erroneous "Invalid argument"
+                   despite successfully replacing history file contents.
+                */
+                break; 
+            default:
+                fprintf(stderr, "Error %d (%s) opening %s for writing.\n", errno, strerror(errno), path[path_num]);
+        }
+    }
+    wordfree(&matched_paths);
+}
+
 int main(int argc, char** argv) {
     struct arguments args;
     args.prompt = "\001\e[0;32m\002dice> \001\e[0m\002";
@@ -549,10 +616,12 @@ int main(int argc, char** argv) {
     }
     dice_init(d);
 
+    char *histfile="~/.dice_history";
     void (*process_next_line)(struct roll_encoding*, struct arguments*);
     switch(args.mode) {
         case INTERACTIVE:
             {
+                read_history_wrapper(histfile);
                 rl_bind_key('\t', rl_insert); // File completion is not relevant for this program
                 process_next_line = &readline_wrapper;
             }
@@ -569,6 +638,9 @@ int main(int argc, char** argv) {
     do {
         process_next_line(d, &args);
     } while(!(d->quit || feof(args.ist)));
+    if(args.mode == INTERACTIVE) {
+        write_history_wrapper(histfile);
+    }
     if(d) {
         free(d);
         d = NULL;

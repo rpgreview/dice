@@ -133,6 +133,5 @@ Discussion and pull requests covering the following would be welcome:
 * Bug fixes
 * Performance enhancements
 * Sensible extensions to the syntax (sensible = it should be useful and have a clear meaning)
-* Cleaner and more robust methods for parsing the syntax
-* Storing history between sessions
+* Cleaner and more robust methods for parsing the syntax (I am a bit of a noob at writing parsers in C.)
 * Establishing a `~/.dicerc` file or such for things like customising the prompt, controlling the behaviour of history, etc.
