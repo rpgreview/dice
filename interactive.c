@@ -2,8 +2,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <wordexp.h> // Needed to expand out history path eg involving '~'
+#include <errno.h>
 
-#include "args.h"
 #include "interactive.h"
 #include "dice.h"
 #include "parse.h"

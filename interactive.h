@@ -1,6 +1,5 @@
 #ifndef __INTERACTIVE_H__
 #define __INTERACTIVE_H__
-#include "args.h"
 #include "dice.h"
 
 void readline_wrapper(struct roll_encoding *d, struct arguments *args);

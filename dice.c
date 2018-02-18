@@ -96,7 +96,6 @@ int main(int argc, char** argv) {
     }
     args.ist = stdin;
 
-
     FILE *rnd_src;
     char rnd_src_path[] = "/dev/urandom";
     rnd_src = fopen(rnd_src_path, "r");
