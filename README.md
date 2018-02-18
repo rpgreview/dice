@@ -48,7 +48,7 @@ dice> 5xd6#This rolls a d6 five times.
 
 Similar to common shells such as Bash and Dash, Dice offers various modes of operation, including scripted vs interactive use, or reading from `stdin` as part of a pipeline.
 
-### Pipeline
+#### Pipeline
 
 ```sh
 $ echo "5x d6" | dice | xargs -n1
