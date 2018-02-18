@@ -49,7 +49,8 @@ typedef enum token_t {
 } token_t;
 
 typedef enum cmd_t {
-    quit,
+    unknown = -1,
+    quit = 0,
     clear
 } cmd_t;
 
@@ -136,24 +137,38 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                             t[*tokens_found].type = number;
                             t[*tokens_found].number = num;
                         } else if(isalpha(*(buf + charnum))) {
-                            tok_str = malloc((CMD_MAX_STR_LEN + 1)*sizeof(char));
+                            int numchars = 0;
+                            while(isalpha(*(buf + charnum))) {
+                                ++numchars;
+                                ++charnum;
+                            }
+                            tok_str = malloc((numchars + 1)*sizeof(char));
                             if(!tok_str) {
                                 fprintf(stderr, "Error allocating memory.\n");
                                 exit(1);
                             }
-                            memset(tok_str, 0, CMD_MAX_STR_LEN + 1);
-                            while(isalpha(*(buf + charnum)) && charnum - offset < CMD_MAX_STR_LEN) {
+                            memset(tok_str, 0, numchars + 1);
+                            charnum = offset;
+                            while(isalpha(*(buf + charnum)) && charnum - offset < numchars) {
                                 tok_str[charnum - offset] = *(buf + charnum);
                                 ++charnum;
                             }
                             tok_str[charnum - offset] = '\0';
                             t[*tokens_found].type = command;
                             int cmd_num = 0;
+                            bool cmd_found = false;
+                            int max_str_len = CMD_MAX_STR_LEN >= numchars ? CMD_MAX_STR_LEN : numchars;
                             while(cmd_num < NUMBER_OF_DEFINED_COMMANDS) {
-                                if(0 == strncmp(tok_str, commands[cmd_num].cmd_str, CMD_MAX_STR_LEN)) {
+                                if(0 == strncmp(tok_str, commands[cmd_num].cmd_str, max_str_len)) {
                                     t[*tokens_found].cmd = commands[cmd_num].cmd_code;
+                                    cmd_found = true;
+                                    break;
                                 }
                                 ++cmd_num;
+                            }
+                            if(!cmd_found) {
+                                printf("Unknown command: %s\n", tok_str);
+                                return 1;
                             }
                         } else {
                             printf("Unknown token detected: %c\n", *(buf + charnum));
@@ -387,6 +402,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                         }
                         break;
                     default:
+                        printf("Commands may not follow other expressions.\n");
                         s = error;
                 }
                 break;
