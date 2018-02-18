@@ -8,6 +8,7 @@
 #include <time.h>
 #include <math.h>
 #include <signal.h>
+#include <termcap.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -26,6 +27,7 @@ struct roll_encoding {
     long ndice;
     long nsides;
     long shift;
+    bool suppress;
     bool quit;
 };
 
@@ -34,6 +36,7 @@ void dice_init(struct roll_encoding *d) {
     d->ndice = 0;
     d->nsides = 0;
     d->shift = 0;
+    d->suppress = false;
     d->quit = false;
 }
 
@@ -46,7 +49,8 @@ typedef enum token_t {
 } token_t;
 
 typedef enum cmd_t {
-    quit
+    quit,
+    clear
 } cmd_t;
 
 struct cmd_map {
@@ -55,10 +59,20 @@ struct cmd_map {
 };
 
 struct cmd_map commands[] = {
-    { quit, { "quit" } }
+    { quit, { "quit" } },
+    { clear, { "clear" } },
 };
-#define NUMBER_OF_DEFINED_COMMANDS 1
-#define CMD_MAX_STR_LEN 4
+#define NUMBER_OF_DEFINED_COMMANDS 2
+#define CMD_MAX_STR_LEN 5
+
+void clear_screen() {
+    char buf[1024];
+    tgetent(buf, getenv("TERM"));
+
+    char *str;
+    str = tgetstr("cl", NULL);
+    fputs(str, stdout);
+} 
 
 struct token {
     token_t type;
@@ -360,7 +374,12 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                         s = recv_cmd;
                         switch(t[toknum].cmd) {
                             case quit:
+                                d->suppress = true;
                                 d->quit = true;
+                                break;
+                            case clear:
+                                d->suppress = true;
+                                clear_screen();
                                 break;
                             default:
                                 printf("Received invalid command.\n");
@@ -394,7 +413,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                 s = error;
         }
     }
-    if(s == finish && !d->quit) {
+    if(s == finish && !d->suppress) {
         return 0;
     } else {
         if(s == error) {
