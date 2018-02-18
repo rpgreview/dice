@@ -363,9 +363,7 @@ int parse(struct roll_encoding *d, const char *buf, const size_t len) {
                                 d->quit = true;
                                 break;
                             default:
-                                printf("Cannot process command '%s' while in state '", commands[t[toknum].cmd].cmd_str);
-                                print_state_name(s);
-                                printf("'\n");
+                                printf("Received invalid command.\n");
                                 s = error;
                         }
                         break;
