@@ -30,7 +30,7 @@ void token_init(struct token *t) {
     t->cmd = -1;
 }
 
-int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
+int lex(struct token *t, int *tokens_found, const char *restrict buf, const size_t len) {
     int charnum = 0;
     *tokens_found = 0;
     while(*(buf + charnum) != '\0' && charnum <= len) {
@@ -182,7 +182,7 @@ void print_state_name(const state_t s) {
         recv_cmd            -> finish, error
 */
 
-int parse(struct roll_encoding *restrict d, const char *buf, const size_t len) {
+int parse(struct roll_encoding *restrict d, const char *restrict buf, const size_t len) {
     int tokens_found = 0;
     struct token t[len];
     int toknum;

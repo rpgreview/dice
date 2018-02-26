@@ -45,7 +45,7 @@ typedef enum state_t {
 
 void clear_screen();
 void token_init(struct token *t);
-int lex(struct token *t, int *tokens_found, const char *buf, const size_t len);
+int lex(struct token *t, int *tokens_found, const char *restrict buf, const size_t len);
 void print_state_name(const state_t s);
-int parse(struct roll_encoding *restrict d, const char *buf, const size_t len);
+int parse(struct roll_encoding *restrict d, const char *restrict buf, const size_t len);
 #endif // __PARSE_H__
