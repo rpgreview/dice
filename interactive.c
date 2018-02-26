@@ -8,7 +8,7 @@
 #include "dice.h"
 #include "parse.h"
 
-void readline_wrapper(struct roll_encoding *d, struct arguments *args) {
+void readline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
     char *line = readline(args->prompt);
     if(line == NULL || line == 0) {
         printf("\n");
