@@ -28,6 +28,6 @@ struct roll_encoding {
     bool quit;
 };
 
-void dice_init(struct roll_encoding *);
-void roll(const struct roll_encoding *d);
+void dice_init(struct roll_encoding *restrict);
+void roll(const struct roll_encoding *restrict);
 #endif // __DICE_H__

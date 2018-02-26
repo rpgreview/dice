@@ -182,7 +182,7 @@ void print_state_name(const state_t s) {
         recv_cmd            -> finish, error
 */
 
-int parse(struct roll_encoding *d, const char *buf, const size_t len) {
+int parse(struct roll_encoding *restrict d, const char *buf, const size_t len) {
     int tokens_found = 0;
     struct token t[len];
     int toknum;

@@ -25,7 +25,7 @@ void sigint_handler(int sig) {
     break_print_loop = true;
 }
 
-void dice_init(struct roll_encoding *d) {
+void dice_init(struct roll_encoding *restrict d) {
     d->nreps = 1;
     d->ndice = 0;
     d->nsides = 0;
@@ -42,7 +42,7 @@ long single_dice_outcome(long sides) {
     return ceil(runif()*sides);
 }
 
-void roll(const struct roll_encoding *d) {
+void roll(const struct roll_encoding *restrict d) {
     signal(SIGINT, sigint_handler);
     break_print_loop = false;
     int rep;
@@ -63,7 +63,7 @@ void roll(const struct roll_encoding *d) {
     printf("\n");
 }
 
-void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
+void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
     size_t bufsize = 0;
     char *line = NULL;
     errno = 0;
@@ -82,7 +82,7 @@ void getline_wrapper(struct roll_encoding *d, struct arguments *args) {
     free(line);
 }
 
-void no_read(struct roll_encoding *d, struct arguments *args) {
+void no_read(struct roll_encoding *restrict d, struct arguments *args) {
     printf("Unknown mode. Not reading any lines.\n");
 }
 
