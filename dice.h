@@ -2,6 +2,21 @@
 #define __DICE_H__
 #include <stdbool.h>
 
+typedef enum invocation_type {
+    INTERACTIVE = 0,
+    SCRIPTED,
+    PIPE
+} invocation_type;
+
+/* This structure is used by main to communicate with parse_opt. */
+struct arguments {
+    char *prompt;
+    invocation_type mode;
+    unsigned int seed;
+    bool seed_set;
+    FILE *ist;
+};
+
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
 struct roll_encoding {

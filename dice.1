@@ -1,0 +1,75 @@
+.TH Dice 1
+.SH NAME
+Dice -- An interpreter for standard dice notation 
+.SH SYNOPSIS
+.B dice
+[\fB\-?hv\fR]
+[\fB\-p\fR \fISTRING\fR]
+[\fB\-s\fR \fINUMBER\fR]
+[\fB\-\-prompt\fR \fISTRING\fR]
+[\fB\-\-seed\fR \fINUMBER\fR]
+[\fB\-\-help\fR]
+[\fB\-\-usage\fR]
+[\fB\-\-version\fR]
+.IR [file]
+.SH DESCRIPTION
+An interpreter and interactive shell for standard dice notation such as `3d6` or `d4 + 2`.
+.P
+As for other common shells such as the Debian Almquist Shell (Dash),
+when
+.B dice
+is invoked without any further arguments or piping/redirection,
+it will begin in interactive mode, commencing a read-eval-print loop based on a GNU readline prompt.
+This mode also uses readline-based features like history and vi-like editing.
+History is stored in \fB~/.dice_history\fR;
+this file will be created upon quitting the first interactive session if it doesn't exist already.
+.P
+When
+.IR file
+is given, 
+.B dice
+will treat it as a script containing dice notation commands,
+opening it for reading and evaluating its contents line-by-line.
+.P
+When not interactive and not given a script name,
+.B dice
+will use getline to read from standard input.
+.SH SYNTAX
+.B dice
+essentially follows standard dice notation,
+for example see the \fBDice_notation\fR page on Wikipedia.
+.P
+Empty lines are ignored; everything after a hash symbol will likewise be ignored as a comment.
+.P
+One extension to standard dice notation currently available is to prefix any dice command with \fB<number> x\fR,
+which will repeat the specified roll \fB<number>\fR times.
+.P
+.B dice
+also has built-in commands \fIquit\fR and \fIclear\fR.
+Their usage is the same as in other shells: quit the session or clear the screen.
+.SH OPTIONS
+.TP
+.BR \fB\-p\fR ", " \-\-prompt=\fISTRING\fR
+Set the dice interactive prompt to \fISTRING\fR.
+(Default: 'dice> ')
+.TP
+.BR \fB\-s\fR ", " \-\-seed=\fINUMBER\fR
+Set the seed to \fINUMBER\fR.
+(Default is based on current time.)
+.TP
+.BR \fB\-?\fR ", " \-\-help
+Give this help list
+.TP
+.BR \fB\-h\fR ", " \-\-help
+Print this help message.
+.TP
+.BR \fB\-\-usage\fR
+Give a short usage message
+.TP
+.BR \fB\-v ", " \-\-version
+Print version information.
+.P
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+.SH SEE ALSO
+readline(3), history(3), dash(1), \fBWikipedia:Dice_notation\fR

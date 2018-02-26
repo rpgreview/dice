@@ -8,20 +8,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-typedef enum invocation_type {
-    INTERACTIVE = 0,
-    SCRIPTED,
-    PIPE
-} invocation_type;
-
-/* This structure is used by main to communicate with parse_opt. */
-struct arguments {
-    char *prompt;
-    invocation_type mode;
-    unsigned int seed;
-    bool seed_set;
-    FILE *ist;
-};
+#include "dice.h"
 
 /*
    OPTIONS.  Field 1 in ARGP.

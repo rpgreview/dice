@@ -7,6 +7,13 @@
 #include <errno.h>
 #include "parse.h"
 
+static const struct cmd_map commands[] = {
+    { quit, { "quit" } },
+    { clear, { "clear" } },
+};
+#define NUMBER_OF_DEFINED_COMMANDS 2
+#define CMD_MAX_STR_LEN 5
+
 void clear_screen() {
     char buf[1024];
     tgetent(buf, getenv("TERM"));

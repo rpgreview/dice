@@ -2,8 +2,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <wordexp.h> // Needed to expand out history path eg involving '~'
+#include <errno.h>
 
-#include "args.h"
 #include "interactive.h"
 #include "dice.h"
 #include "parse.h"
@@ -46,6 +46,9 @@ void read_history_wrapper(const char *filename) {
         switch(errno) {
             case 0:
                 break;
+            case 2:
+                // Ignore missing file error, it just means we're running interactively for the first time.
+                break;
             default:
                 fprintf(stderr, "Error %d (%s) opening %s for reading.\n", errno, strerror(errno), path[path_num]);
         }
@@ -83,7 +86,7 @@ void write_history_wrapper(const char *filename) {
                    write_history emits an erroneous "Invalid argument"
                    despite successfully replacing history file contents.
                 */
-                break; 
+                break;
             default:
                 fprintf(stderr, "Error %d (%s) opening %s for writing.\n", errno, strerror(errno), path[path_num]);
         }

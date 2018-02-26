@@ -12,7 +12,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-const char *argp_program_version = "Dice 0.3";
+const char *argp_program_version = "Dice 0.4";
 const char *argp_program_bug_address = "cryptarch@github";
 
 #include "args.h"
@@ -95,7 +95,6 @@ int main(int argc, char** argv) {
         args.mode = PIPE;
     }
     args.ist = stdin;
-
 
     FILE *rnd_src;
     char rnd_src_path[] = "/dev/urandom";

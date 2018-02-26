@@ -48,7 +48,7 @@ dice> 5xd6#This rolls a d6 five times.
 
 Similar to common shells such as Bash and Dash, Dice offers various modes of operation, including scripted vs interactive use, or reading from `stdin` as part of a pipeline.
 
-### Pipeline
+#### Pipeline
 
 ```sh
 $ echo "5x d6" | dice | xargs -n1
@@ -112,7 +112,8 @@ $
 Interactive use incorporates the [GNU readline library](https://tiswww.case.edu/php/chet/readline/rltop.html).
 This means you can customise the prompt, even with ANSI-escape style colours,
 and cycle through history using the up and down arrow keys.
-History is not currently stored between sessions but this might be implemented in future.
+
+Between sessions, history is stored in `~/.dice_history`.
 
 
 Installation

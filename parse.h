@@ -22,13 +22,6 @@ struct cmd_map {
     char cmd_str[8];
 };
 
-static struct cmd_map commands[] = {
-    { quit, { "quit" } },
-    { clear, { "clear" } },
-};
-#define NUMBER_OF_DEFINED_COMMANDS 2
-#define CMD_MAX_STR_LEN 5
-
 struct token {
     token_t type;
     long number;
