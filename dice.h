@@ -24,7 +24,7 @@ struct roll_encoding {
     long ndice;
     long nsides;
     long shift;
-    bool suppress;
+    bool suppress; // Used to silence output, eg when clearing screen
     bool quit;
 };
 
