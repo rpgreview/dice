@@ -19,7 +19,6 @@ void readline_wrapper(struct roll_encoding *restrict d, struct arguments *args) 
     size_t bufsize = strlen(line);
     int parse_success = parse(d, line, bufsize);
     if(0 == parse_success) {
-        roll(d);
         add_history(line);
     }
     free(line);

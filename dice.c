@@ -76,9 +76,7 @@ void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
         free(line);
         return;
     }
-    if(0 == parse(d, line, bufsize)) {
-        roll(d);
-    }
+    parse(d, line, bufsize);
     free(line);
 }
 
