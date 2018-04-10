@@ -43,6 +43,15 @@ Therefore, while the following looks a little strange, it is syntactically valid
 dice> 5xd6#This rolls a d6 five times.
 ```
 
+You can make multiple different rolls on a single line delimited by semi-colons:
+
+```
+dice> d100; d20; d6+2 # This is a useful pattern for RuneQuest: roll to hit, hit location, damage.
+17
+20
+8
+```
+
 
 ### Modes
 

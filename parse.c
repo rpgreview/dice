@@ -40,7 +40,7 @@ int lex(struct token *t, int *tokens_found, const char *restrict buf, const size
             break;
         } else {
             switch(*(buf + charnum)) {
-                case 'd': case 'D': case '+': case '-': case 'x':
+                case 'd': case 'D': case '+': case '-': case 'x': case ';':
                     {
                         t[*tokens_found].type = operator;
                         t[*tokens_found].op = *(buf + charnum);
@@ -176,10 +176,10 @@ void print_state_name(const state_t s) {
         recv_x              -> recv_num_dice, recv_d, error
         recv_num_dice       -> recv_d, error
         recv_d              -> recv_num_sides, error
-        recv_num_sides      -> recv_shift_dir, finish, error
+        recv_num_sides      -> recv_shift_dir, start, finish, error
         recv_shift_dir      -> recv_shift_amount, error
-        recv_shift_amount   -> finish
-        recv_cmd            -> finish, error
+        recv_shift_amount   -> start, finish
+        recv_cmd            -> start, finish, error
 */
 
 int parse(struct roll_encoding *restrict d, const char *restrict buf, const size_t len) {
@@ -198,6 +198,7 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
     dice_init(d);
     int tmp = 0;
     for(toknum = 0; toknum < tokens_found && !(s == finish || s == error); ++toknum) {
+        bool continuing = false;
         switch(t[toknum].type) {
             case none:
                 s = error;
@@ -296,6 +297,33 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
                                 s = recv_shift_dir;
                                 d->shift = t[toknum].op == '+' ? 1 : -1;
                                 break;
+                            case ';':
+                                continuing = true;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_shift_amount:
+                        switch(t[toknum].op) {
+                            case ';':
+                                continuing = true;
+                                break;
+                            default:
+                                printf("Cannot process operator '%c' while in state '", t[toknum].op);
+                                print_state_name(s);
+                                printf("'\n");
+                                s = error;
+                        }
+                        break;
+                    case recv_cmd:
+                        switch(t[toknum].op) {
+                            case ';':
+                                continuing = true;
+                                break;
                             default:
                                 printf("Cannot process operator '%c' while in state '", t[toknum].op);
                                 print_state_name(s);
@@ -309,6 +337,13 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
                         printf("'\n");
                         s = error;
                 }
+                if(continuing) {
+                    if(!d->suppress) {
+                        roll(d);
+                    }
+                    s = start;
+                    dice_init(d);
+                }
                 break;
             case command:
                 switch(s) {
@@ -316,6 +351,7 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
                         s = recv_cmd;
                         switch(t[toknum].cmd) {
                             case quit:
+                                s = finish;
                                 d->suppress = true;
                                 d->quit = true;
                                 break;
@@ -341,6 +377,9 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
                         break;
                     case recv_num_sides: case recv_shift_amount: case recv_cmd:
                         s = finish;
+                        if(!d->suppress) {
+                            roll(d);
+                        }
                         break;
                     default:
                         printf("Cannot process end token while in state '");
@@ -355,8 +394,11 @@ int parse(struct roll_encoding *restrict d, const char *restrict buf, const size
                 printf("'\n");
                 s = error;
         }
+        if(d->quit) {
+            break;
+        }
     }
-    if(s == finish && !d->suppress) {
+    if(s == finish) {
         return 0;
     } else {
         if(s == error) {

@@ -12,7 +12,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-const char *argp_program_version = "Dice 0.4";
+const char *argp_program_version = "Dice 0.5";
 const char *argp_program_bug_address = "cryptarch@github";
 
 #include "args.h"
@@ -76,9 +76,7 @@ void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
         free(line);
         return;
     }
-    if(0 == parse(d, line, bufsize)) {
-        roll(d);
-    }
+    parse(d, line, bufsize);
     free(line);
 }
 
