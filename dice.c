@@ -11,6 +11,7 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <omp.h>
 
 const char *argp_program_version = "Dice 0.5";
 const char *argp_program_bug_address = "cryptarch@github";
@@ -42,18 +43,59 @@ long single_dice_outcome(long sides) {
     return ceil(runif()*sides);
 }
 
-void roll(const struct roll_encoding *restrict d) {
-    signal(SIGINT, sigint_handler);
-    break_print_loop = false;
-    int rep;
+long parallelised_total_dice_outcome(long sides, long ndice) {
+    long roll_num = 0;
+    long sum = 0;
+    bool keep_going = true;
+    #pragma omp for schedule(static) private(roll_num) nowait
+    for(roll_num = 0; roll_num < ndice; ++roll_num) {
+        if(keep_going) {
+            sum += single_dice_outcome(sides);
+        }
+        if(break_print_loop) {
+            keep_going = false;
+        }
+    }
+    return sum;
+}
+
+long serial_total_dice_outcome(long sides, long ndice) {
+    long roll_num = 0;
+    long sum = 0;
+    for(roll_num = 0; roll_num < ndice; ++roll_num) {
+        sum += single_dice_outcome(sides);
+        if(break_print_loop) {
+            break;
+        }
+    }
+    return sum;
+}
+
+void parallelised_rep_rolls(const struct roll_encoding *restrict d) {
+    long rep = 0;
+    bool keep_going = true;
+    #pragma omp for schedule(static) private(rep) nowait
     for(rep = 0; rep < d->nreps; ++rep) {
         long result = d->shift;
-        int roll_num;
-        for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
-            if(break_print_loop) {
-                break;
+        if(keep_going) {
+            result += serial_total_dice_outcome(d->nsides, d->ndice);
+            if(rep != 0) {
+                printf(" ");
             }
-            result += single_dice_outcome(d->nsides);
+            printf("%ld", result);
+        }
+        if(break_print_loop) {
+            keep_going = false;
+        }
+    }
+}
+
+void serial_rep_rolls(const struct roll_encoding *restrict d) {
+    long rep = 0;
+    for(rep = 0; rep < d->nreps; ++rep) {
+        long result = d->shift + parallelised_total_dice_outcome(d->nsides, d->ndice);
+        if(break_print_loop) {
+            break;
         }
         if(rep != 0) {
             printf(" ");
@@ -70,13 +112,13 @@ void roll(const struct roll_encoding *restrict d) {
     } else if(d->shift > 0 && LONG_MAX - d->shift < d->ndice*d->nsides) {
         fprintf(stderr, "Warning: %ldd%ld + %ld dice are prone to integer overflow.\n", d->ndice, d->nsides, d->shift);
     }
-
     if(d->nreps > d->ndice) {
         parallelised_rep_rolls(d);
     } else {
         serial_rep_rolls(d);
     }
     printf("\n");
+    #pragma omp flush
 }
 
 void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
