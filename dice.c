@@ -60,6 +60,22 @@ void roll(const struct roll_encoding *restrict d) {
         }
         printf("%ld", result);
     }
+}
+
+void roll(const struct roll_encoding *restrict d) {
+    signal(SIGINT, sigint_handler);
+    break_print_loop = false;
+    if(LONG_MAX/d->ndice < d->nsides) {
+        fprintf(stderr, "Warning: %ldd%ld dice are prone to integer overflow.\n", d->ndice, d->nsides);
+    } else if(d->shift > 0 && LONG_MAX - d->shift < d->ndice*d->nsides) {
+        fprintf(stderr, "Warning: %ldd%ld + %ld dice are prone to integer overflow.\n", d->ndice, d->nsides, d->shift);
+    }
+
+    if(d->nreps > d->ndice) {
+        parallelised_rep_rolls(d);
+    } else {
+        serial_rep_rolls(d);
+    }
     printf("\n");
 }
 
