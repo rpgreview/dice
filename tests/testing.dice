@@ -8,4 +8,7 @@ clear
 5x 7d8 + 23
 d6; d6; d6; d6
 
+# Check out the warning for integer overflow
+1000000d100000000 + 9223372036854775805
+
 quit

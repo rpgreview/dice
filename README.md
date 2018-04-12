@@ -1,7 +1,7 @@
 Dice
 ====
 
-An interpreter and interactive shell for standard dice notation such as `3d6` or `d4 + 2`.
+A multi-threaded interpreter and interactive shell for standard dice notation such as `3d6` or `d4 + 2`.
 
 
 Usage
@@ -133,6 +133,15 @@ $ make
 $ make check # optional
 $ ln -svf $PWD/dice ~/bin/
 ```
+
+### Dependencies
+
+Check the output of `grep -h '#include <' *.[ch] | sort -u`.
+
+Most dependencies will be installed on most Linuces but maybe you will need your
+package manager to install things like termcap, wordexp or OpenMP.
+
+Note, however, that GCC ships with libgomp, so explicit installation of OpenMP probably won't be required.
 
 
 Contributing
