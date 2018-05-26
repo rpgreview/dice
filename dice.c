@@ -26,13 +26,68 @@ void sigint_handler(int sig) {
     break_print_loop = true;
 }
 
-void dice_init(struct roll_encoding *restrict d) {
-    d->nreps = 1;
+void free_dice(struct roll_encoding *);
+void free_dice(struct roll_encoding *d) {
+    if(d->next != NULL) {
+        free_dice(d->next);
+    }
+    dice_init(d);
+    free(d);
+}
+
+void dice_reset(struct roll_encoding *d) {
+    if(d->next != NULL) {
+        dice_reset(d->next);
+    }
+    dice_init(d);
+    free(d);
+}
+
+void parse_tree_reset(struct parse_tree *t) {
+    t->suppress = false;
+    t->quit = false;
+    t->nreps = 1;
+    t->ndice = 0;
+    t->last_roll = NULL;
+    if(t->dice_specs != NULL) {
+        dice_reset(t->dice_specs);
+        t->dice_specs = NULL;
+    }
+}
+
+void dice_init(struct roll_encoding *d) {
     d->ndice = 0;
     d->nsides = 0;
-    d->shift = 0;
-    d->suppress = false;
-    d->quit = false;
+    d->dir = pos;
+    d->next = NULL;
+}
+
+void print_dice_specs(const struct roll_encoding *d) {
+    switch(d->dir) {
+        case pos:
+            printf("+");
+            break;
+        case neg:
+            printf("-");
+            break;
+        default:
+            printf("?");
+    }
+    printf("%ldd%ld", d->ndice, d->nsides);
+    if(d->next != NULL) {
+        print_dice_specs(d->next);
+    }
+}
+
+void print_parse_tree(const struct parse_tree *t) {
+    printf("{suppress: %s", t->suppress ? "true" : "false");
+    printf(", quit: %s", t->quit ? "true" : "false");
+    printf(", nreps: %ld", t->nreps);
+    printf(", ndice: %ld", t->ndice);
+    printf(", roll string: ");
+    if(t->dice_specs != NULL) {
+        print_dice_specs(t->dice_specs);
+    }
 }
 
 double runif() {
@@ -40,10 +95,20 @@ double runif() {
 }
 
 long single_dice_outcome(long sides) {
-    return ceil(runif()*sides);
+    if(sides < 1) {
+        fprintf(stderr, "Invalid number of sides: %ld\n", sides);
+        return LONG_MIN;
+    } else if(sides == 1) {
+        return 1;
+    } else {
+        return ceil(runif()*sides);
+    }
 }
 
 long parallelised_total_dice_outcome(long sides, long ndice) {
+    if(sides == 1) { // Optimise for non-random parts eg the "+1" in "d4+1".
+        return ndice;
+    }
     long roll_num = 0;
     long sum = 0;
     bool keep_going = true;
@@ -60,6 +125,9 @@ long parallelised_total_dice_outcome(long sides, long ndice) {
 }
 
 long serial_total_dice_outcome(long sides, long ndice) {
+    if(sides == 1) { // Optimise for non-random parts eg the "+1" in "d4+1".
+        return ndice;
+    }
     long roll_num = 0;
     long sum = 0;
     for(roll_num = 0; roll_num < ndice; ++roll_num) {
@@ -71,57 +139,87 @@ long serial_total_dice_outcome(long sides, long ndice) {
     return sum;
 }
 
-void parallelised_rep_rolls(const struct roll_encoding *restrict d) {
-    long rep = 0;
-    bool keep_going = true;
-    #pragma omp for schedule(static) private(rep) nowait
-    for(rep = 0; rep < d->nreps; ++rep) {
-        long result = d->shift;
-        if(keep_going) {
-            result += serial_total_dice_outcome(d->nsides, d->ndice);
-            if(rep != 0) {
-                printf(" ");
-            }
-            printf("%ld", result);
-        }
-        if(break_print_loop) {
-            keep_going = false;
-        }
+void check_roll_sanity(struct roll_encoding* d, long result_so_far) {
+    if(LONG_MAX/d->ndice < d->nsides) {
+        fprintf(stderr, "Warning: %ldd%ld dice are prone to integer overflow.\n", d->ndice, d->nsides);
+    } else if(d->dir == pos && LONG_MAX - result_so_far < d->ndice*d->nsides) {
+        fprintf(stderr, "Warning: %ldd%ld + %ld dice are prone to integer overflow.\n", d->ndice, d->nsides, result_so_far);
     }
 }
 
-void serial_rep_rolls(const struct roll_encoding *restrict d) {
+void parallelised_rep_rolls(const struct parse_tree *t) {
     long rep = 0;
-    for(rep = 0; rep < d->nreps; ++rep) {
-        long result = d->shift + parallelised_total_dice_outcome(d->nsides, d->ndice);
-        if(break_print_loop) {
-            break;
-        }
+    bool keep_going = true;
+    if(t->dice_specs == NULL) {
+        return;
+    }
+    #pragma omp for schedule(static) private(rep) nowait
+    for(rep = 0; rep < t->nreps; ++rep) {
         if(rep != 0) {
             printf(" ");
+        }
+        struct roll_encoding *d = t->dice_specs;
+        long result = 0;
+        while(d != NULL && keep_going) {
+            if(d->ndice > 0 && d->nsides > 0) {
+                check_roll_sanity(d, result);
+                result += d->dir * serial_total_dice_outcome(d->nsides, d->ndice);
+            }
+            if(d->next != NULL) {
+                d = d->next;
+            } else {
+                d = NULL;
+            }
+            if(break_print_loop) {
+                keep_going = false;
+            }
         }
         printf("%ld", result);
     }
 }
 
-void roll(const struct roll_encoding *restrict d) {
+void serial_rep_rolls(const struct parse_tree *t) {
+    long rep = 0;
+    if(t->dice_specs == NULL) {
+        return;
+    }
+    for(rep = 0; rep < t->nreps; ++rep) {
+        if(rep != 0) {
+            printf(" ");
+        }
+        struct roll_encoding *d = t->dice_specs;
+        long result = 0;
+        while(d != NULL) {
+            if(d->ndice > 0 && d->nsides > 0) {
+                check_roll_sanity(d, result);
+                result += d->dir * parallelised_total_dice_outcome(d->nsides, d->ndice);
+            }
+            if(d->next != NULL) {
+                d = d->next;
+            } else {
+                d = NULL;
+            }
+            if(break_print_loop) {
+                break;
+            }
+        }
+        printf("%ld", result);
+    }
+}
+
+void roll(const struct parse_tree *t) {
     signal(SIGINT, sigint_handler);
     break_print_loop = false;
-    if(LONG_MAX/d->ndice < d->nsides) {
-        fprintf(stderr, "Warning: %ldd%ld dice are prone to integer overflow.\n", d->ndice, d->nsides);
-    } else if(d->shift > 0 && LONG_MAX - d->shift < d->ndice*d->nsides) {
-        fprintf(stderr, "Warning: %ldd%ld + %ld dice are prone to integer overflow.\n", d->ndice, d->nsides, d->shift);
-    }
-    if(d->nreps > d->ndice) {
-        parallelised_rep_rolls(d);
+    if(t->nreps > t->ndice) {
+        parallelised_rep_rolls(t);
     } else {
-        serial_rep_rolls(d);
+        serial_rep_rolls(t);
     }
     printf("\n");
     #pragma omp flush
 }
 
-void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
+void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     size_t bufsize = 0;
     char *line = NULL;
     errno = 0;
@@ -130,15 +228,15 @@ void getline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
         if(errno != 0) {
             printf("Error %d (%s) getting line for reading.\n", errno, strerror(errno));
         }
-        d->quit = true;
+        t->quit = true;
         free(line);
         return;
     }
-    parse(d, line, bufsize);
+    parse(t, line, bufsize);
     free(line);
 }
 
-void no_read(struct roll_encoding *restrict d, struct arguments *args) {
+void no_read(struct parse_tree *t, struct arguments *args) {
     printf("Unknown mode. Not reading any lines.\n");
 }
 
@@ -175,15 +273,16 @@ int main(int argc, char** argv) {
 
     srandom(args.seed);
 
-    struct roll_encoding *d = malloc(sizeof(struct roll_encoding));
-    if(!d) {
+    struct parse_tree *t = malloc(sizeof(struct parse_tree));
+    if(!t) {
         fprintf(stderr, "malloc error\n");
         exit(1);
     }
-    dice_init(d);
+    memset(t, 0, sizeof(struct parse_tree));
+    parse_tree_reset(t);
 
     char *histfile="~/.dice_history";
-    void (*process_next_line)(struct roll_encoding*, struct arguments*);
+    void (*process_next_line)(struct parse_tree*, struct arguments*);
     switch(args.mode) {
         case INTERACTIVE:
             {
@@ -202,14 +301,15 @@ int main(int argc, char** argv) {
     }
 
     do {
-        process_next_line(d, &args);
-    } while(!(d->quit || feof(args.ist)));
+        process_next_line(t, &args);
+    } while(!(t->quit || feof(args.ist)));
     if(args.mode == INTERACTIVE) {
         write_history_wrapper(histfile);
     }
-    if(d) {
-        free(d);
-        d = NULL;
+    if(t) {
+        parse_tree_reset(t);
+        free(t);
+        t = NULL;
     }
     return 0;
 }
