@@ -139,11 +139,9 @@ long serial_total_dice_outcome(long sides, long ndice) {
     return sum;
 }
 
-void check_roll_sanity(struct roll_encoding* d, long result_so_far) {
+void check_roll_sanity(const struct roll_encoding* d, const long result_so_far) {
     if(LONG_MAX/d->ndice < d->nsides) {
         fprintf(stderr, "Warning: %ldd%ld dice are prone to integer overflow.\n", d->ndice, d->nsides);
-    } else if(d->dir == pos && LONG_MAX - result_so_far < d->ndice*d->nsides) {
-        fprintf(stderr, "Warning: %ldd%ld + %ld dice are prone to integer overflow.\n", d->ndice, d->nsides, result_so_far);
     }
 }
 

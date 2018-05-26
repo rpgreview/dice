@@ -15,6 +15,7 @@ hash valgrind 2> /dev/null \
 ./dice <<< ";;;;;;"
 ./dice <<< "-1-2-3-4"
 ./dice <<< "4x-1-2-3-4"
+./dice <<< 4x-1-2d4-d6-1
 
 hash datamash 2> /dev/null \
     || 1>&2 echo "Datamash not found"
