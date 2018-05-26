@@ -3,12 +3,16 @@
 3d6
 5x 7d8 + 23
 
-clear
+# Uncomment the following command to check that `clear` works. This will disrupt other types of testing output.
+#clear
+
 3d6
 5x 7d8 + 23
 d6; d6; d6; d6
 
-# Check out the warning for integer overflow
+;;;;;; # Check that a bunch of empty statements is cool
+
+# Check out the warning for integer overflow.
 1000000d100000000 + 9223372036854775805
 
 quit

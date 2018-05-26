@@ -52,6 +52,27 @@ dice> d100; d20; d6+2 # This is a useful pattern for RuneQuest: roll to hit, hit
 8
 ```
 
+You can arithmetically combine multiple dice types and constants in an intuitve manner:
+
+```
+dice> 1+2+3+4
+10
+dice> 4x-1-2-3-4
+-10 -10 -10 -10
+dice> d6+d4
+6
+dice> d2-1+d2-1
+1
+```
+
+You can make your computer give you a frowny face:
+
+```
+dice> 1000000d100000000 + 9223372036854775805
+Warning: 9223372036854775805d1 + 50005958856427 dice are prone to integer overflow.
+-9223322030895919384
+```
+
 
 ### Modes
 

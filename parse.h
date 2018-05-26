@@ -6,9 +6,12 @@
 typedef enum token_t {
     none = 0,
     number,
-    operator,
+    dice_operator,
+    rep_operator,
+    additive_operator,
     command,
-    end
+    statement_delimiter,
+    eol
 } token_t;
 
 typedef enum cmd_t {
@@ -32,20 +35,19 @@ struct token {
 typedef enum state_t {
     error = -1,
     start = 0,
-    operator_pending,   // Always number
-    recv_x,             // Always operator 'x'
-    recv_num_dice,      // Always number
-    recv_d,             // Always operator 'd'/'D'
-    recv_num_sides,     // Always number
-    recv_shift_dir,     // Always operator '+'/'-'
-    recv_shift_amount,  // Always number
-    recv_cmd,           // Always string
+    decide_reps_or_rolls,
+    want_number_of_sides,
+    check_number_of_dice,
+    want_roll,
+    check_dice_operator,
+    check_more_rolls,
+    check_end,
     finish
 } state_t;
 
 void clear_screen();
 void token_init(struct token *t);
-int lex(struct token *t, int *tokens_found, const char *restrict buf, const size_t len);
+int lex(struct token *t, int *tokens_found, const char *buf, const size_t len);
 void print_state_name(const state_t s);
-int parse(struct roll_encoding *restrict d, const char *restrict buf, const size_t len);
+int parse(struct parse_tree *t, const char *buf, const size_t len);
 #endif // __PARSE_H__
