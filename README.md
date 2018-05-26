@@ -65,14 +65,6 @@ dice> d2-1+d2-1
 1
 ```
 
-You can make your computer give you a frowny face:
-
-```
-dice> 1000000d100000000 + 9223372036854775805
-Warning: 9223372036854775805d1 + 50005958856427 dice are prone to integer overflow.
--9223322030895919384
-```
-
 
 ### Modes
 

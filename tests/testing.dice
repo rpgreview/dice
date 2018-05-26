@@ -12,7 +12,4 @@ d6; d6; d6; d6
 
 ;;;;;; # Check that a bunch of empty statements is cool
 
-# Check out the warning for integer overflow.
-1000000d100000000 + 9223372036854775805
-
 quit
