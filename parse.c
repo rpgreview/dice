@@ -368,8 +368,20 @@ void process_rep_operator(struct token *tok, struct parse_tree *t, state_t *s, l
 
 void process_additive_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     switch(*s) {
-        case start: case check_more_rolls:
-            *s = want_roll;
+        case start:
+            *s = check_number_of_dice;
+            if(t->last_roll == NULL) {
+                t->dice_specs = malloc(sizeof(struct roll_encoding));
+                t->last_roll = t->dice_specs;
+            } else {
+                t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                t->last_roll = t->last_roll->next;
+            }
+            dice_init(t->last_roll);
+            t->last_roll->dir = tok->op == '+' ? pos : neg;
+            break;
+        case check_more_rolls:
+            *s = check_number_of_dice;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
                 t->last_roll = t->dice_specs;
@@ -393,7 +405,7 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             t->last_roll->ndice = *tmp;
             t->ndice += *tmp;
             // First number done, now set up for whatever follows.
-            *s = want_roll;
+            *s = check_number_of_dice;
             t->last_roll->next = malloc(sizeof(struct roll_encoding));
             t->last_roll = t->last_roll->next;
             dice_init(t->last_roll);
@@ -401,7 +413,7 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             break;
         case check_dice_operator: // Deal with cases like 2d4+1+3d6. The middle "roll" needs its nsides set to 1. This only happens if memory has already been allocated for the middle.
             t->last_roll->nsides = 1;
-            *s = want_roll;
+            *s = check_number_of_dice;
             t->last_roll->next = malloc(sizeof(struct roll_encoding));
             t->last_roll = t->last_roll->next;
             dice_init(t->last_roll);

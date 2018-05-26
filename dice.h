@@ -21,8 +21,8 @@ struct arguments {
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
 typedef enum direction {
-    pos = 1,
-    neg = -1
+    neg = -1,
+    pos = 1
 } direction;
 
 struct roll_encoding;
