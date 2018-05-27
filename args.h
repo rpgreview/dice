@@ -1,12 +1,9 @@
 #ifndef __ARGS_H__
 #define __ARGS_H__
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 #include <argp.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <errno.h>
+#include <string.h>
 #include "io.h"
 
 const char *argp_program_version = "Dice 0.8";

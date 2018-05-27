@@ -1,4 +1,6 @@
+#define _GNU_SOURCE 1 // Needed for getline to avoid implicit function declaration, see `man 3 getline`
 #include <stdio.h>
+#include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <wordexp.h> // Needed to expand out history path eg involving '~'

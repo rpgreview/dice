@@ -1,17 +1,9 @@
-#define _GNU_SOURCE 1
+#define _GNU_SOURCE 1 // Needed to avoid various "implicit function declaration" warnings/errors.
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
 #include <time.h>
-#include <math.h>
-#include <signal.h>
 
 #include <readline/readline.h>
-#include <readline/history.h>
-#include <omp.h>
 
 #include "args.h"
 #include "parse.h"

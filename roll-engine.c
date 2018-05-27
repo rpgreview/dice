@@ -14,7 +14,6 @@
 #include <readline/history.h>
 #include <omp.h>
 
-#include "dice.h"
 #include "parse.h"
 #include "io.h"
 #include "roll-engine.h"

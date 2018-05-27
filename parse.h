@@ -2,7 +2,6 @@
 #define __PARSE_H__
 #include <stdlib.h>
 #include <stdbool.h>
-#include "dice.h"
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 

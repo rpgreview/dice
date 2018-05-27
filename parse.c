@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,6 +6,7 @@
 #include <limits.h>
 #include <termcap.h> // Needed for clear_screen
 #include <errno.h>
+#include <omp.h>
 #include "parse.h"
 #include "roll-engine.h"
 
