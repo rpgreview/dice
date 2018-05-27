@@ -4,9 +4,29 @@
 #include <wordexp.h> // Needed to expand out history path eg involving '~'
 #include <errno.h>
 
-#include "interactive.h"
-#include "dice.h"
+#include "io.h"
 #include "parse.h"
+
+void getline_wrapper(struct parse_tree *t, struct arguments *args) {
+    size_t bufsize = 0;
+    char *line = NULL;
+    errno = 0;
+    int getline_retval = getline(&line, &bufsize, args->ist);
+    if(line == NULL || line == 0 || feof(args->ist) || errno != 0 || getline_retval < 0) {
+        if(errno != 0) {
+            printf("Error %d (%s) getting line for reading.\n", errno, strerror(errno));
+        }
+        t->quit = true;
+        free(line);
+        return;
+    }
+    parse(t, line, bufsize);
+    free(line);
+}
+
+void no_read(struct parse_tree *t, struct arguments *args) {
+    printf("Unknown mode. Not reading any lines.\n");
+}
 
 void readline_wrapper(struct parse_tree *t, struct arguments *args) {
     char *line = readline(args->prompt);
@@ -91,4 +111,8 @@ void write_history_wrapper(const char *filename) {
         }
     }
     wordfree(&matched_paths);
+}
+
+void sigint_handler(int sig) {
+    break_print_loop = true;
 }

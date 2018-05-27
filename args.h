@@ -7,8 +7,10 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include "io.h"
 
-#include "dice.h"
+const char *argp_program_version = "Dice 0.8";
+const char *argp_program_bug_address = "cryptarch@github";
 
 /*
    OPTIONS.  Field 1 in ARGP.

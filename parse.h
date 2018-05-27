@@ -1,7 +1,32 @@
 #ifndef __PARSE_H__
 #define __PARSE_H__
 #include <stdlib.h>
+#include <stdbool.h>
 #include "dice.h"
+
+#define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
+
+typedef enum direction {
+    neg = -1,
+    pos = 1
+} direction;
+
+struct roll_encoding;
+struct roll_encoding {
+    long ndice;
+    long nsides;
+    direction dir;
+    struct roll_encoding *next;
+};
+
+struct parse_tree {
+    bool suppress; // Used to silence output, eg when clearing screen
+    bool quit;
+    long nreps;
+    struct roll_encoding *dice_specs;
+    struct roll_encoding *last_roll; // Easily find latest entry in dice_specs list
+    long ndice;
+};
 
 typedef enum token_t {
     none = 0,
@@ -50,4 +75,5 @@ void token_init(struct token *t);
 int lex(struct token *t, int *tokens_found, const char *buf, const size_t len);
 void print_state_name(const state_t s);
 int parse(struct parse_tree *t, const char *buf, const size_t len);
+void parse_tree_reset(struct parse_tree *t);
 #endif // __PARSE_H__
