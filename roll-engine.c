@@ -21,15 +21,15 @@
 void print_dice_specs(const struct roll_encoding *d) {
     switch(d->dir) {
         case pos:
-            printf("+");
+            fprintf(stderr, "+");
             break;
         case neg:
-            printf("-");
+            fprintf(stderr, "-");
             break;
         default:
-            printf("?");
+            fprintf(stderr, "?");
     }
-    printf("%ldd%ld", d->ndice, d->nsides);
+    fprintf(stderr, "%ldd%ld", d->ndice, d->nsides);
     if(d->next != NULL) {
         print_dice_specs(d->next);
     }
@@ -108,9 +108,46 @@ long serial_total_dice_outcome(long sides, long ndice) {
     return sum;
 }
 
-void check_roll_sanity(const struct roll_encoding* d, const long result_so_far) {
-    if(LONG_MAX/d->ndice < d->nsides) {
-        fprintf(stderr, "Warning: %ldd%ld dice are prone to integer overflow.\n", d->ndice, d->nsides);
+void check_roll_sanity(const struct parse_tree* t) {
+    signal(SIGINT, sigint_handler);
+    break_print_loop = false;
+    if(t->dice_specs == NULL) {
+        return;
+    }
+    struct roll_encoding *d = t->dice_specs;
+    long cumulative_dice_range[] = { 0, 0 };
+    bool continuing = true;
+    bool warning = false;
+    while(continuing) {
+        switch(d->dir) {
+            case pos:
+                if(cumulative_dice_range[1] > 0 && (LONG_MAX-cumulative_dice_range[1])/d->ndice < d->nsides) {
+                    warning = true;
+                } else {
+                    cumulative_dice_range[0] += d->nsides;
+                    cumulative_dice_range[1] += d->ndice*d->nsides;
+                }
+                break;
+            case neg:
+                if(cumulative_dice_range[1] < 0 && (LONG_MIN-cumulative_dice_range[0])/d->ndice > -d->nsides) {
+                    warning = true;
+                } else {
+                    cumulative_dice_range[0] -= d->ndice*d->nsides;
+                    cumulative_dice_range[1] -= d->nsides;
+                }
+                break;
+            default: {}
+        }
+        if(d->next != NULL && !warning && !break_print_loop) {
+            d = d->next;
+        } else {
+            continuing = false;
+        }
+    }
+    if(warning) {
+        fprintf(stderr, "Warning: ");
+        print_dice_specs(t->dice_specs);
+        fprintf(stderr, " are prone to integer overflow.\n");
     }
 }
 
@@ -129,7 +166,6 @@ void parallelised_rep_rolls(const struct parse_tree *t) {
         long result = 0;
         while(d != NULL && keep_going) {
             if(d->ndice > 0 && d->nsides > 0) {
-                check_roll_sanity(d, result);
                 result += d->dir * serial_total_dice_outcome(d->nsides, d->ndice);
             }
             if(d->next != NULL) {
@@ -158,7 +194,6 @@ void serial_rep_rolls(const struct parse_tree *t) {
         long result = 0;
         while(d != NULL) {
             if(d->ndice > 0 && d->nsides > 0) {
-                check_roll_sanity(d, result);
                 result += d->dir * parallelised_total_dice_outcome(d->nsides, d->ndice);
             }
             if(d->next != NULL) {
@@ -177,6 +212,7 @@ void serial_rep_rolls(const struct parse_tree *t) {
 void roll(const struct parse_tree *t) {
     signal(SIGINT, sigint_handler);
     break_print_loop = false;
+    check_roll_sanity(t);
     if(t->nreps > t->ndice) {
         parallelised_rep_rolls(t);
     } else {
