@@ -8,16 +8,16 @@
 #include "dice.h"
 #include "parse.h"
 
-void readline_wrapper(struct roll_encoding *restrict d, struct arguments *args) {
+void readline_wrapper(struct parse_tree *t, struct arguments *args) {
     char *line = readline(args->prompt);
     if(line == NULL || line == 0) {
         printf("\n");
-        d->quit = true;
+        t->quit = true;
         free(line);
         return;
     }
     size_t bufsize = strlen(line);
-    int parse_success = parse(d, line, bufsize);
+    int parse_success = parse(t, line, bufsize);
     if(0 == parse_success) {
         add_history(line);
     }

@@ -1,14 +1,21 @@
 #! /bin/bash
 
-./dice <<< 3d6
-./dice <<< "5x 7d8 + 23"
-./dice ./tests/testing.dice
-
 hash valgrind 2> /dev/null \
-    || 1>&2 echo "Valgrind not found"
+    || {
+        1>&2 echo "Valgrind not found"
+        ./dice ./tests/testing.dice
+    }
 hash valgrind 2> /dev/null \
     && valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --show-reachable=no --track-origins=yes \
     dice ./tests/testing.dice
+
+./dice <<< 3d6
+./dice <<< "5x 7d8 + 23"
+./dice <<< "5x d4 + 2 + d6"
+./dice <<< ";;;;;;"
+./dice <<< "-1-2-3-4"
+./dice <<< "4x-1-2-3-4"
+./dice <<< 4x-1-2d4-d6-1
 
 hash datamash 2> /dev/null \
     || 1>&2 echo "Datamash not found"

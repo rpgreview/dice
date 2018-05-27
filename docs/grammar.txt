@@ -1,0 +1,45 @@
+Grammar
+----
+
+Statement           = DiceExpression | Command  | Statement StatementDelimiter Statement | Statement EOL | EOL
+Command             = 'quit' | 'clear'
+DiceExpression      = Number RepOperator Rolls | Rolls
+Rolls               = Rolls AdditiveOperator Roll | Roll
+Roll                = Number DiceOperator Number | DiceOperator Number | Number
+AdditiveOperator    = '+' | '-'
+DiceOperator        = 'd' | 'D'
+RepOperator         = 'x' | 'X'
+StatementDelimiter  = ';'
+
+
+Valid state transitions
+----
+
+INITIAL STATE           TOKEN RECEIVED      RESULTING STATE
+----------------------------------------------------------------
+start                   Number              decide_reps_or_rolls
+start                   DiceOperator        want_number_of_sides
+start                   AdditiveOperator    want_roll
+start                   Command             check_end
+start                   StatementDelimiter  start
+start                   EOL                 finish
+decide_reps_or_rolls    RepOperator         want_roll
+decide_reps_or_rolls    DiceOperator        want_number_of_sides
+decide_reps_or_rolls    AdditiveOperator    want_roll
+decide_reps_or_rolls    StatementDelimiter  start
+decide_reps_or_rolls    EOL                 finish
+want_number_of_sides    Number              check_more_rolls
+want_roll               Number              check_dice_operator
+want_roll               DiceOperator        want_number_of_sides
+want_roll               AdditiveOperator    check_number_of_dice
+check_dice_operator     DiceOperator        want_number_of_sides
+check_dice_operator     AdditiveOperator    want_roll
+check_dice_operator     StatementDelimiter  start
+check_dice_operator     EOL                 finish
+check_more_rolls        AdditiveOperator    want_roll
+check_more_rolls        StatementDelimiter  start
+check_more_rolls        EOL                 finish
+check_number_of_dice    Number              check_dice_operator
+check_number_of_dice    DiceOperator        want_number_of_sides
+check_end               StatementDelimiter  start
+check_end               EOL                 finish

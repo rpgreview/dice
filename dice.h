@@ -1,5 +1,6 @@
 #ifndef __DICE_H__
 #define __DICE_H__
+#include <stdio.h>
 #include <stdbool.h>
 
 typedef enum invocation_type {
@@ -19,15 +20,30 @@ struct arguments {
 
 #define LONG_MAX_STR_LEN 19 // Based on decimal representation of LONG_MAX
 
+typedef enum direction {
+    neg = -1,
+    pos = 1
+} direction;
+
+struct roll_encoding;
 struct roll_encoding {
-    long nreps;
     long ndice;
     long nsides;
-    long shift;
-    bool suppress; // Used to silence output, eg when clearing screen
-    bool quit;
+    direction dir;
+    struct roll_encoding *next;
 };
 
-void dice_init(struct roll_encoding *restrict);
-void roll(const struct roll_encoding *restrict);
+struct parse_tree {
+    bool suppress; // Used to silence output, eg when clearing screen
+    bool quit;
+    long nreps;
+    struct roll_encoding *dice_specs;
+    struct roll_encoding *last_roll; // Easily find latest entry in dice_specs list
+    long ndice;
+};
+
+void parse_tree_reset(struct parse_tree*);
+void dice_reset(struct roll_encoding *);
+void dice_init(struct roll_encoding *);
+void roll(const struct parse_tree *);
 #endif // __DICE_H__
