@@ -12,4 +12,10 @@ d6; d6; d6; d6
 
 ;;;;;; # Check that a bunch of empty statements is cool
 
+# Check out the warning for using dice with too many sides.
+1d2147483648
+
+# Check out the warnings for integer overflow.
+1000000d100000000 + 9223372036854775805
+-9223372036854775804 - 1000d1000
 quit
