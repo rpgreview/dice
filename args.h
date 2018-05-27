@@ -6,7 +6,7 @@
 #include <string.h>
 #include "io.h"
 
-const char *argp_program_version = "Dice 0.8";
+const char *argp_program_version = "Dice 0.9";
 const char *argp_program_bug_address = "cryptarch@github";
 
 /*
