@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +6,9 @@
 #include <limits.h>
 #include <termcap.h> // Needed for clear_screen
 #include <errno.h>
+#include <omp.h>
 #include "parse.h"
+#include "roll-engine.h"
 
 static const struct cmd_map commands[] = {
     { quit, { "quit" } },
@@ -246,6 +249,17 @@ void print_token_info(const struct token *tok) {
     printf("}");
 }
 
+void print_parse_tree(const struct parse_tree *t) {
+    printf("{suppress: %s", t->suppress ? "true" : "false");
+    printf(", quit: %s", t->quit ? "true" : "false");
+    printf(", nreps: %ld", t->nreps);
+    printf(", ndice: %ld", t->ndice);
+    printf(", roll string: ");
+    if(t->dice_specs != NULL) {
+        print_dice_specs(t->dice_specs);
+    }
+}
+
 void process_none(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     printf("Nothing to do.\n");
     *s = error;
@@ -272,9 +286,9 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
             }
             break;
         case check_number_of_dice:
-            if(tok->number > RAND_MAX) {
+            if(tok->number > LONG_MAX) {
                 *s = error;
-                printf("The maximum number of dice is %d (RAND_MAX).\n", RAND_MAX);
+                printf("The maximum number of dice is %ld (LONG_MAX).\n", LONG_MAX);
             } else {
                 t->last_roll->ndice = tok->number;
                 *s = check_dice_operator;
@@ -534,6 +548,18 @@ void process_default(struct token *tok, struct parse_tree *t, state_t *s, long* 
     print_state_name(*s);
     printf("'\n");
     *s = error;
+}
+
+void parse_tree_reset(struct parse_tree *t) {
+    t->suppress = false;
+    t->quit = false;
+    t->nreps = 1;
+    t->ndice = 0;
+    t->last_roll = NULL;
+    if(t->dice_specs != NULL) {
+        dice_reset(t->dice_specs);
+        t->dice_specs = NULL;
+    }
 }
 
 int parse(struct parse_tree *t, const char *buf, const size_t len) {

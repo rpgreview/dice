@@ -167,3 +167,5 @@ Discussion and pull requests covering the following would be welcome:
 * Sensible extensions to the syntax (sensible = it should be useful and have a clear meaning)
 * Cleaner and more robust methods for parsing the syntax (I am a bit of a noob at writing parsers in C.)
 * Establishing a `~/.dicerc` file or such for things like customising the prompt, controlling the behaviour of history, etc.
+
+If you raise an issue about a bug, please consider preparing a pull request which will add a test for the bug in the `./tests/` directory.
