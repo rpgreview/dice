@@ -7,7 +7,7 @@
 #include "io.h"
 
 const char *argp_program_version = "Dice 0.9";
-const char *argp_program_bug_address = "cryptarch@github";
+const char *argp_program_bug_address = "https://notabug.org/cryptarch/dice/issues";
 
 /*
    OPTIONS.  Field 1 in ARGP.
@@ -15,7 +15,7 @@ const char *argp_program_bug_address = "cryptarch@github";
 */
 static struct argp_option options[] = {
     {"prompt",  'p', "STRING", 0, "Set the dice interactive prompt to STRING.\n(Default: 'dice> ')"},
-    {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is based on current time.)"},
+    {"seed", 's', "NUMBER", 0, "Set the seed to NUMBER. (Default is obtained from /dev/urandom.)"},
     {"help", 'h', NULL, 0, "Print this help message."},
     {"version", 'v', NULL, 0, "Print version information."},
     {0}
