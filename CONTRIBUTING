@@ -1,0 +1,65 @@
+DEVELOPMENT
+
+Dice is primarily developed at https://notabug.org/cryptarch/dice
+
+There is a mirror at https://github.com/rpgreview/dice where development can also take place if desired.
+
+Both of those repositories have Issues pages available where you can raise bugs, ask questions, give feedback or make feature requests.
+
+Discussion and pull requests covering the following are welcome:
+
+* Bug fixes.
+* Performance enhancements.
+* Sensible extensions to the syntax. Sensible means, it should be useful to a recognised community of gamers, and it should have a clear formalisable meaning.
+* Cleaner and more robust methods for parsing and extending the syntax.
+* Establishing a `~/.dicerc` file for customising the prompt, configuring readline behaviour, etc.
+* Updating or expanding documentation.
+
+BUGS
+
+Before raising a bug, please test whether the bug is still present in the latest commit on the master branch.
+If the bug is present in the latest commit on the master branch, please provide the following information with your bug report:
+
+1. Summarise the bug in general terms.
+2. What did you expect to see before noticing the bug?
+3. How, specifically, did your observations differ from your expectations? (Copy-paste output from terminal preferred; screenshots also acceptable.)
+4. What steps could an independent person follow to reproduce the bug?
+5. What versions of Dice's dependencies do you have present on your system?
+6. What options, flags and compiler did you select when building Dice?
+
+If you raise an issue about a bug, please consider preparing a pull request which will add a test for the bug in the ./tests/ directory.
+
+PERSONAL CONDUCT
+
+When participating in discussions about Dice or contributing to its development, please try to adhere to the GNU Kind Communication Guidelines:
+https://www.gnu.org/philosophy/kind-communication.en.html
+
+A summary of those guidelines:
+
+* Presume good faith by other participants in a discussion.
+* Respond with compassion and humility.
+* Accept the ways people choose to express their identity.
+* Focus on what is relevant to improving the software.
+* If conflict arises, attempt to de-escalate it.
+
+OTHER TYPES OF CONTRIBUTION
+
+If you don't feel confident as a coder, you haven't spotted any bugs, and you think the documentation is perfect, you might not be sure how you can help.
+
+First of all, keep pursuing your own excellence in the computational arts!
+Everyone has to start somewhere, so have faith in your ability to master what at first seems difficult.
+And then, even if you don't end up contributing to Dice directly, you might end up writing some other software that will be valued by free software enthusiasts.
+Thanks in advance ;)
+
+If you would like to contribute or express gratitude to Dice financially, please make a donation to either or both of:
+
+* The RPG Review Cooperative (http://rpgreview.net/)
+* The Free Software Foundation (https://www.fsf.org/)
+
+The RPG Review Cooperative is a non-profit association focused on role-playing game advocacy, development and community.
+Dice is battle-tested and peer-reviewed during RPG Review Coop activities.
+
+The Free Software Foundation (FSF) is a non-profit organisation dedicated to computer user freedoms.
+You are able to enjoy Dice for free because it is released under an FSF-endorsed GNU GPL license.
+
+If you feel the need to use Dice or any part of its source code in a commercial application, please contact the author to discuss terms for an alternative license.

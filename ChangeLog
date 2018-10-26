@@ -1,0 +1,7 @@
+Version 0.9
+
+	This was a bugfix release. Noted improvements:
+
+	* Improved sanity checks and new tests.
+	* Constrain number of dice by LONG_MAX, not RAND_MAX.
+	* Tidy up header inclusions.
