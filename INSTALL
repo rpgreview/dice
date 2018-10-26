@@ -12,6 +12,20 @@ without warranty of any kind.
 Basic Installation
 ==================
 
+If the source package you have received does not already contain
+the files 'configure' and 'Makefile', you can generate them using
+the provided 'autogen.sh' script.
+
+   An additional script, 'build.sh', is provided as a usable example
+of the build process. It is expected to work as-is on any GNU/Linux
+system provided all dependencies are installed. It also enables certain
+optimisations and fortifications preferred by the author and which
+have been tested with Dice.
+
+   What follows are boilerplate instructions which ship with any
+software which aims to be GNU-compatible. They have not all been checked
+for relevance to Dice.
+
    Briefly, the shell command './configure && make && make install'
 should configure, build, and install this package.  The following
 more-detailed instructions are generic; see the 'README' file for
