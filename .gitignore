@@ -97,5 +97,6 @@ m4/ltversion.m4
 m4/lt~obsolete.m4
 
 .deps/
+Makefile
 config.h
 *.tar.gz
