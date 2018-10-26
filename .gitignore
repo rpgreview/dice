@@ -98,3 +98,4 @@ m4/lt~obsolete.m4
 
 .deps/
 config.h
+*.tar.gz
