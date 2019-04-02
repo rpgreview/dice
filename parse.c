@@ -75,6 +75,13 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                         ++charnum;
                     }
                     break;
+                case 'T':
+                    {
+                        t[*tokens_found].type = threshold_operator;
+                        t[*tokens_found].op = *(buf + charnum);
+                        ++charnum;
+                    }
+                    break;
                 case ';':
                     {
                         t[*tokens_found].type = statement_delimiter;
@@ -307,6 +314,15 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
                 *s = check_dice_operator;
             }
             break;
+        case want_threshold:
+            if(tok->number > LONG_MAX) {
+                *s = error;
+                printf("The maximum threshold is %ld (LONG_MAX).\n", LONG_MAX);
+            } else {
+                t->threshold = tok->number;
+                *s = check_end;
+            }
+            break;
         default:
             printf("Cannot process number '%ld' while in state '", tok->number);
             print_state_name(*s);
@@ -473,6 +489,20 @@ void process_explode_operator(struct token *tok, struct parse_tree *t, state_t *
     }
 }
 
+void process_threshold_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
+    switch(*s) {
+        case check_dice_operator: case check_explode_or_more_rolls: case check_more_rolls:
+            *s = want_threshold;
+            t->use_threshold = true;
+            break;
+        default:
+            printf("Cannot process operator '%c' while in state '", tok->op);
+            print_state_name(*s);
+            printf("'\n");
+            *s = error;
+    }
+}
+
 void process_command(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     switch(*s) {
         case start:
@@ -582,6 +612,8 @@ void parse_tree_reset(struct parse_tree *t) {
     t->quit = false;
     t->nreps = 1;
     t->ndice = 0;
+    t->use_threshold = false;
+    t->threshold = 0;
     t->last_roll = NULL;
     if(t->dice_specs != NULL) {
         dice_reset(t->dice_specs);
@@ -621,6 +653,9 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
                 break;
             case explode_operator:
                 process_token = process_explode_operator;
+                break;
+            case threshold_operator:
+                process_token = process_threshold_operator;
                 break;
             case command:
                 process_token = process_command;

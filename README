@@ -1,4 +1,5 @@
 Dice
+====
 
 A multi-threaded interpreter and interactive shell for standard dice notation such as 3d6 or d4 + 2.
 
@@ -81,6 +82,33 @@ dice> 10x d6!
 The exploding dice operator binds to the `dX` part of `NdX` notation.
 I.e., `3d6!` means roll a `1d6!` three times and add the results together.
 It doesn't mean "roll a 3d6 and keep adding more to the sum so long as you keep getting 18s".
+
+
+You case use a `T` followed by a number to denote the threshold on a dice pool.
+A single roll with a threshold will return 1 if the result was greater than or equal to the threshold, otherwise it will return 0.
+Thresholding changes the usual behaviour of the `x` operator:
+a repeated roll subject to a threshold will return the number of successes, not a sequence of 0s and 1s.
+
+Example from _Cyberpunk 2020_ where a Solo with Intelligence 6 and Awareness/Notice 7 succeeds at an average perception check:
+
+```
+dice> d10! + 6 + 7 T 15
+1
+```
+
+Note the exclamation mark (`!`), since _Cyberpunk 2020_ combines both penetration rolls and thresholds.
+
+Example from _Mage: The Ascension (2E)_ where a character with an Arete of 6 gets five successes on a coincidental one-dot spell:
+
+```
+dice> 6x d10 T4
+5
+```
+
+In practice, using the threshold operator only has limited value.
+Systems where thresholding is used often also have a notion of "critical failure".
+The variety of such systems contraindicates non-trivial thresholding implementation.
+It is usually required to know the raw dice rolls rather than simply making a naive "success test".
 
 
 ### Modes

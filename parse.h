@@ -23,6 +23,8 @@ struct parse_tree {
     bool suppress; // Used to silence output, eg when clearing screen
     bool quit;
     long nreps;
+    bool use_threshold;
+    long threshold;
     struct roll_encoding *dice_specs;
     struct roll_encoding *last_roll; // Easily find latest entry in dice_specs list
     long ndice;
@@ -35,6 +37,7 @@ typedef enum token_t {
     rep_operator,
     additive_operator,
     explode_operator,
+    threshold_operator,
     command,
     statement_delimiter,
     eol
@@ -68,6 +71,7 @@ typedef enum state_t {
     check_dice_operator,
     check_explode_or_more_rolls,
     check_more_rolls,
+    want_threshold,
     check_end,
     finish
 } state_t;

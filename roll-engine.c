@@ -161,14 +161,15 @@ void check_roll_sanity(const struct parse_tree* t) {
 }
 
 void parallelised_rep_rolls(const struct parse_tree *t) {
-    long rep = 0;
-    bool keep_going = true;
     if(t->dice_specs == NULL) {
         return;
     }
+    long rep = 0;
+    long nsuccess = 0;
+    bool keep_going = true;
     #pragma omp for schedule(static) private(rep) nowait
     for(rep = 0; rep < t->nreps; ++rep) {
-        if(rep != 0) {
+        if(rep != 0 && !t->use_threshold) {
             printf(" ");
         }
         struct roll_encoding *d = t->dice_specs;
@@ -186,17 +187,25 @@ void parallelised_rep_rolls(const struct parse_tree *t) {
                 keep_going = false;
             }
         }
-        printf("%ld", result);
+        if(t->use_threshold) {
+            nsuccess += result >= t->threshold;
+        } else {
+            printf("%ld", result);
+        }
+    }
+    if(t->use_threshold) {
+        printf("%ld", nsuccess);
     }
 }
 
 void serial_rep_rolls(const struct parse_tree *t) {
-    long rep = 0;
     if(t->dice_specs == NULL) {
         return;
     }
+    long rep = 0;
+    long nsuccess = 0;
     for(rep = 0; rep < t->nreps; ++rep) {
-        if(rep != 0) {
+        if(rep != 0 && !t->use_threshold) {
             printf(" ");
         }
         struct roll_encoding *d = t->dice_specs;
@@ -214,7 +223,14 @@ void serial_rep_rolls(const struct parse_tree *t) {
                 break;
             }
         }
-        printf("%ld", result);
+        if(t->use_threshold) {
+            nsuccess += result >= t->threshold;
+        } else {
+            printf("%ld", result);
+        }
+    }
+    if(t->use_threshold) {
+        printf("%ld", nsuccess);
     }
 }
 
