@@ -194,8 +194,8 @@ void print_state_name(const state_t s) {
         case check_dice_operator:
             printf("check_dice_operator");
             break;
-        case check_explode_or_more_rolls:
-            printf("check_explode_or_more_rolls");
+        case check_modifiers_or_more_rolls:
+            printf("check_modifiers_or_more_rolls");
             break;
         case check_more_rolls:
             printf("check_more_rolls");
@@ -301,7 +301,7 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
                 *s = error;
                 printf("The maximum number of sides a dice can have is %d (RAND_MAX).\n", RAND_MAX);
             } else {
-                *s = check_explode_or_more_rolls;
+                *s = check_modifiers_or_more_rolls;
                 t->last_roll->nsides = tok->number;
             }
             break;
@@ -423,7 +423,7 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             dice_init(t->last_roll);
             t->last_roll->dir = tok->op == '+' ? pos : neg;
             break;
-        case check_explode_or_more_rolls: case check_more_rolls:
+        case check_modifiers_or_more_rolls: case check_more_rolls:
             *s = check_number_of_dice;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
@@ -477,7 +477,7 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
 
 void process_explode_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     switch(*s) {
-        case check_explode_or_more_rolls:
+        case check_modifiers_or_more_rolls:
             *s = check_more_rolls;
             t->last_roll->explode = true;
             break;
@@ -506,7 +506,7 @@ void process_threshold_operator(struct token *tok, struct parse_tree *t, state_t
             *s = want_threshold;
             t->use_threshold = true;
             break;
-        case check_dice_operator: case check_explode_or_more_rolls: case check_more_rolls:
+        case check_dice_operator: case check_modifiers_or_more_rolls: case check_more_rolls:
             *s = want_threshold;
             t->use_threshold = true;
             break;
@@ -567,7 +567,7 @@ void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_
             continuing = true;
             t->last_roll->nsides = 1;
             break;
-        case check_explode_or_more_rolls: case check_more_rolls:
+        case check_modifiers_or_more_rolls: case check_more_rolls:
             continuing = true;
             break;
         case check_end:

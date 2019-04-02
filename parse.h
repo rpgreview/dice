@@ -69,7 +69,7 @@ typedef enum state_t {
     check_number_of_dice,
     want_roll,
     check_dice_operator,
-    check_explode_or_more_rolls,
+    check_modifiers_or_more_rolls,
     check_more_rolls,
     want_threshold,
     check_end,
