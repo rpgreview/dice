@@ -15,6 +15,7 @@ struct roll_encoding {
     long ndice;
     long nsides;
     direction dir;
+    bool explode;
     struct roll_encoding *next;
 };
 
@@ -33,6 +34,7 @@ typedef enum token_t {
     dice_operator,
     rep_operator,
     additive_operator,
+    explode_operator,
     command,
     statement_delimiter,
     eol
@@ -64,6 +66,7 @@ typedef enum state_t {
     check_number_of_dice,
     want_roll,
     check_dice_operator,
+    check_explode_or_more_rolls,
     check_more_rolls,
     check_end,
     finish

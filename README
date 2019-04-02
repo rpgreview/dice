@@ -71,6 +71,17 @@ dice> d2-1+d2-1
 1
 ```
 
+You can use an exclamation mark for "exploding" dice, ala Cyberpunk 2020 or older editions of Shadowrun:
+
+```
+dice> 10x d6!
+4 1 1 11 3 3 1 9 3 4
+```
+
+The exploding dice operator binds to the `dX` part of `NdX` notation.
+I.e., `3d6!` means roll a `1d6!` three times and add the results together.
+It doesn't mean "roll a 3d6 and keep adding more to the sum so long as you keep getting 18s".
+
 
 ### Modes
 

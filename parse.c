@@ -68,6 +68,13 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                         ++charnum;
                     }
                     break;
+                case '!':
+                    {
+                        t[*tokens_found].type = explode_operator;
+                        t[*tokens_found].op = *(buf + charnum);
+                        ++charnum;
+                    }
+                    break;
                 case ';':
                     {
                         t[*tokens_found].type = statement_delimiter;
@@ -180,6 +187,9 @@ void print_state_name(const state_t s) {
         case check_dice_operator:
             printf("check_dice_operator");
             break;
+        case check_explode_or_more_rolls:
+            printf("check_explode_or_more_rolls");
+            break;
         case check_more_rolls:
             printf("check_more_rolls");
             break;
@@ -211,6 +221,9 @@ void print_token_type(const token_t type) {
         case additive_operator:
             printf("additive_operator");
             break;
+        case explode_operator:
+            printf("explode_operator");
+            break;
         case command:
             printf("command");
             break;
@@ -230,7 +243,7 @@ void print_token_payload(const struct token *tok) {
         case number:
             printf("%ld", tok->number);
             break;
-        case dice_operator: case rep_operator: case additive_operator: case statement_delimiter:
+        case dice_operator: case rep_operator: case additive_operator: case explode_operator: case statement_delimiter:
             printf("%c", tok->op);
             break;
         case command:
@@ -281,7 +294,7 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
                 *s = error;
                 printf("The maximum number of sides a dice can have is %d (RAND_MAX).\n", RAND_MAX);
             } else {
-                *s = check_more_rolls;
+                *s = check_explode_or_more_rolls;
                 t->last_roll->nsides = tok->number;
             }
             break;
@@ -394,7 +407,7 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             dice_init(t->last_roll);
             t->last_roll->dir = tok->op == '+' ? pos : neg;
             break;
-        case check_more_rolls:
+        case check_explode_or_more_rolls: case check_more_rolls:
             *s = check_number_of_dice;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
@@ -437,6 +450,20 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
         case want_roll:
             t->last_roll->dir = tok->op == '+' ? pos : neg;
             *s = check_number_of_dice;
+            break;
+        default:
+            printf("Cannot process operator '%c' while in state '", tok->op);
+            print_state_name(*s);
+            printf("'\n");
+            *s = error;
+    }
+}
+
+void process_explode_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
+    switch(*s) {
+        case check_explode_or_more_rolls:
+            *s = check_more_rolls;
+            t->last_roll->explode = true;
             break;
         default:
             printf("Cannot process operator '%c' while in state '", tok->op);
@@ -495,7 +522,7 @@ void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_
             continuing = true;
             t->last_roll->nsides = 1;
             break;
-        case check_more_rolls:
+        case check_explode_or_more_rolls: case check_more_rolls:
             continuing = true;
             break;
         case check_end:
@@ -591,6 +618,9 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
                 break;
             case additive_operator:
                 process_token = process_additive_operator;
+                break;
+            case explode_operator:
+                process_token = process_explode_operator;
                 break;
             case command:
                 process_token = process_command;

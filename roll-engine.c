@@ -29,7 +29,7 @@ void print_dice_specs(const struct roll_encoding *d) {
         default:
             fprintf(stderr, "?");
     }
-    fprintf(stderr, "%ldd%ld", d->ndice, d->nsides);
+    fprintf(stderr, "%ldd%ld%s", d->ndice, d->nsides, d->explode ? "!" : "");
     if(d->next != NULL) {
         print_dice_specs(d->next);
     }
@@ -56,6 +56,7 @@ void dice_init(struct roll_encoding *d) {
     d->ndice = 0;
     d->nsides = 0;
     d->dir = pos;
+    d->explode = false;
     d->next = NULL;
 }
 
@@ -63,18 +64,26 @@ double runif() {
     return (double)random()/RAND_MAX;
 }
 
-long single_dice_outcome(long sides) {
+long single_dice_outcome(long sides, bool explode) {
     if(sides < 1) {
         fprintf(stderr, "Invalid number of sides: %ld\n", sides);
         return LONG_MIN;
     } else if(sides == 1) {
         return 1;
     } else {
-        return ceil(runif()*sides);
+        long roll = ceil(runif()*sides);
+        long sum = roll;
+        if(explode) {
+            while(roll == sides) {
+                roll = ceil(runif()*sides);
+                sum += roll;
+            }
+        }
+        return sum;
     }
 }
 
-long parallelised_total_dice_outcome(long sides, long ndice) {
+long parallelised_total_dice_outcome(long sides, long ndice, bool explode) {
     if(sides == 1) { // Optimise for non-random parts eg the "+1" in "d4+1".
         return ndice;
     }
@@ -84,7 +93,7 @@ long parallelised_total_dice_outcome(long sides, long ndice) {
     #pragma omp for schedule(static) private(roll_num) nowait
     for(roll_num = 0; roll_num < ndice; ++roll_num) {
         if(keep_going) {
-            sum += single_dice_outcome(sides);
+            sum += single_dice_outcome(sides, explode);
         }
         if(break_print_loop) {
             keep_going = false;
@@ -93,14 +102,14 @@ long parallelised_total_dice_outcome(long sides, long ndice) {
     return sum;
 }
 
-long serial_total_dice_outcome(long sides, long ndice) {
+long serial_total_dice_outcome(long sides, long ndice, bool explode) {
     if(sides == 1) { // Optimise for non-random parts eg the "+1" in "d4+1".
         return ndice;
     }
     long roll_num = 0;
     long sum = 0;
     for(roll_num = 0; roll_num < ndice; ++roll_num) {
-        sum += single_dice_outcome(sides);
+        sum += single_dice_outcome(sides, explode);
         if(break_print_loop) {
             break;
         }
@@ -166,7 +175,7 @@ void parallelised_rep_rolls(const struct parse_tree *t) {
         long result = 0;
         while(d != NULL && keep_going) {
             if(d->ndice > 0 && d->nsides > 0) {
-                result += d->dir * serial_total_dice_outcome(d->nsides, d->ndice);
+                result += d->dir * serial_total_dice_outcome(d->nsides, d->ndice, d->explode);
             }
             if(d->next != NULL) {
                 d = d->next;
@@ -194,7 +203,7 @@ void serial_rep_rolls(const struct parse_tree *t) {
         long result = 0;
         while(d != NULL) {
             if(d->ndice > 0 && d->nsides > 0) {
-                result += d->dir * parallelised_total_dice_outcome(d->nsides, d->ndice);
+                result += d->dir * parallelised_total_dice_outcome(d->nsides, d->ndice, d->explode);
             }
             if(d->next != NULL) {
                 d = d->next;
