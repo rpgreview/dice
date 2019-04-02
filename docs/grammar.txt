@@ -29,6 +29,7 @@ start                           EOL                 finish
 decide_reps_or_rolls            RepOperator         want_roll
 decide_reps_or_rolls            DiceOperator        want_number_of_sides
 decide_reps_or_rolls            AdditiveOperator    want_roll
+decide_reps_or_rolls            ThresholdOperator   want_threshold
 decide_reps_or_rolls            StatementDelimiter  start
 decide_reps_or_rolls            EOL                 finish
 want_number_of_sides            Number              check_explosion_or_more_rolls

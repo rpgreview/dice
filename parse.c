@@ -491,6 +491,21 @@ void process_explode_operator(struct token *tok, struct parse_tree *t, state_t *
 
 void process_threshold_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     switch(*s) {
+        case decide_reps_or_rolls: 
+            if(t->last_roll == NULL) {
+                t->dice_specs = malloc(sizeof(struct roll_encoding));
+                t->last_roll = t->dice_specs;
+            } else {
+                t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                t->last_roll = t->last_roll->next;
+            }
+            dice_init(t->last_roll);
+            t->last_roll->nsides = 1;
+            t->last_roll->ndice = *tmp;
+            t->ndice += *tmp;
+            *s = want_threshold;
+            t->use_threshold = true;
+            break;
         case check_dice_operator: case check_explode_or_more_rolls: case check_more_rolls:
             *s = want_threshold;
             t->use_threshold = true;
