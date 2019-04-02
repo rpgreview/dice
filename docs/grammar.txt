@@ -11,7 +11,7 @@ AdditiveOperator    = '+' | '-'
 DiceOperator        = 'd' | 'D'
 RepOperator         = 'x' | 'X'
 ExplodeOperator     = '!'
-ThresholdOperator   = 'T'
+ThresholdOperator   = 't' | 'T' | '>'
 StatementDelimiter  = ';'
 
 

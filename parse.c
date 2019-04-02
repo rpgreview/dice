@@ -75,7 +75,7 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                         ++charnum;
                     }
                     break;
-                case 'T':
+                case 't': case 'T': case '>':
                     {
                         t[*tokens_found].type = threshold_operator;
                         t[*tokens_found].op = *(buf + charnum);
