@@ -107,8 +107,8 @@ dice> 6x d10 T4
 
 In practice, using the threshold operator only has limited value.
 Systems where thresholding is used often also have a notion of "critical failure".
-The variety of such systems contraindicates non-trivial thresholding implementation.
 It is usually required to know the raw dice rolls rather than simply making a naive "success test".
+The variety of these systems contraindicates any non-trivial thresholding implementation.
 
 
 ### Modes
