@@ -16,6 +16,8 @@ struct roll_encoding {
     long nsides;
     direction dir;
     bool explode;
+    bool keep;
+    long discard;
     struct roll_encoding *next;
 };
 
@@ -38,6 +40,7 @@ typedef enum token_t {
     additive_operator,
     explode_operator,
     threshold_operator,
+    keep_operator,
     command,
     statement_delimiter,
     eol
@@ -72,6 +75,7 @@ typedef enum state_t {
     check_modifiers_or_more_rolls,
     check_more_rolls,
     want_threshold,
+    want_keep_number,
     check_end,
     finish
 } state_t;

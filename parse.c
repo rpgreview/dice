@@ -82,6 +82,13 @@ int lex(struct token *t, int *tokens_found, const char *buf, const size_t len) {
                         ++charnum;
                     }
                     break;
+                case 'k': case 'K':
+                    {
+                        t[*tokens_found].type = keep_operator;
+                        t[*tokens_found].op = *(buf + charnum);
+                        ++charnum;
+                    }
+                    break;
                 case ';':
                     {
                         t[*tokens_found].type = statement_delimiter;
@@ -323,6 +330,16 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
                 *s = check_end;
             }
             break;
+        case want_keep_number:
+            if(tok->number < 0) {
+                *s = error;
+                printf("You can't keep a negative number of dice.\n");
+            } else {
+                *s = check_more_rolls;
+                long raw_discard = t->last_roll->ndice - tok->number;
+                t->last_roll->discard = raw_discard < 0 ? 0 : raw_discard;
+            }
+            break;
         default:
             printf("Cannot process number '%ld' while in state '", tok->number);
             print_state_name(*s);
@@ -478,8 +495,21 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
 void process_explode_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
     switch(*s) {
         case check_modifiers_or_more_rolls:
-            *s = check_more_rolls;
             t->last_roll->explode = true;
+            break;
+        default:
+            printf("Cannot process operator '%c' while in state '", tok->op);
+            print_state_name(*s);
+            printf("'\n");
+            *s = error;
+    }
+}
+
+void process_keep_operator(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
+    switch(*s) {
+        case check_modifiers_or_more_rolls:
+            *s = want_keep_number;
+            t->last_roll->keep = true;
             break;
         default:
             printf("Cannot process operator '%c' while in state '", tok->op);
@@ -668,6 +698,9 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
                 break;
             case explode_operator:
                 process_token = process_explode_operator;
+                break;
+            case keep_operator:
+                process_token = process_keep_operator;
                 break;
             case threshold_operator:
                 process_token = process_threshold_operator;

@@ -1,7 +1,14 @@
 Dice
 ====
 
-A multi-threaded interpreter and interactive shell for standard dice notation such as `3d6` or `d4 + 2`.
+A multi-threaded interpreter and interactive shell for standard dice notation such as 3d6 or d4 + 2.
+
+For usage, see the included manual dice(1).
+
+For installation, see INSTALL.
+
+For attribution and legalities see AUTHORS and LICENSE.
+
 
 
 Usage
@@ -52,7 +59,7 @@ dice> d100; d20; d6+2 # This is a useful pattern for RuneQuest: roll to hit, hit
 8
 ```
 
-You can arithmetically combine multiple dice types and constants in an intuitve manner:
+You can arithmetically combine multiple dice types and constants in an intuitive manner:
 
 ```
 dice> 1+2+3+4
@@ -64,6 +71,64 @@ dice> d6+d4
 dice> d2-1+d2-1
 1
 ```
+
+You can use an exclamation mark for "exploding" dice, ala Cyberpunk 2020 or older editions of Shadowrun:
+
+```
+dice> 10x d6!
+4 1 1 11 3 3 1 9 3 4
+```
+
+The exploding dice operator binds to the `dX` part of `NdX` notation.
+I.e., `3d6!` means roll a `1d6!` three times and add the results together.
+It doesn't mean "roll a 3d6 and keep adding more to the sum so long as you keep getting 18s".
+
+
+You can use a `k` followed by a number to denote _keeping_ that number of dice (i.e. discarding the lowest dice).
+Eg `4d6k3` means roll `4x d6`, keep the best three, discarding the lowest.
+(This is a common means of generating character attributes between 3 and 18, skewed so that the median is somewhat higher than the "human average" of about 10 or 11.)
+Example:
+
+```
+dice> 8x 4d6k3
+12 12 8 12 15 14 16 14
+```
+
+It is possible to apply "keeping" to exploding dice (but not vice versa):
+
+```
+dice> 8x 4d6!k3
+10 13 18 19 15 13 12 9
+dice> 8x 4d6k3!
+Cannot process operator '!' while in state 'check_more_rolls'
+```
+
+You case use a `T` followed by a number to denote the threshold on a dice pool.
+A single roll with a threshold will return 1 if the result was greater than or equal to the threshold, otherwise it will return 0.
+Thresholding changes the usual behaviour of the `x` operator:
+a repeated roll subject to a threshold will return the number of successes, not a sequence of 0s and 1s.
+
+Example from _Cyberpunk 2020_ where a Solo with Intelligence 6 and Awareness/Notice 7 succeeds at an average perception check:
+
+```
+dice> d10! + 6 + 7 T 15
+1
+```
+
+Note the exclamation mark (`!`), since _Cyberpunk 2020_ combines both penetration rolls and thresholds.
+
+Example from _Mage: The Ascension (2E)_ where a character with an Arete of 6 gets five successes on a coincidental one-dot spell:
+
+```
+dice> 6x d10 T4
+5
+```
+
+In practice, using the threshold operator only has limited value, as systems where thresholding is used often also have a notion of "critical failure".
+For example, in _Cyberpunk 2020_, any `d10` roll that comes up `1` implies a fumble.
+
+In such systems, it is required to know the raw dice rolls; it is insufficient to simply make a naive "success test".
+The variety of systems contraindicates any non-trivial thresholding implementation.
 
 
 ### Modes
