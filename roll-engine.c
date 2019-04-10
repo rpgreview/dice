@@ -153,20 +153,24 @@ void check_roll_sanity(const struct parse_tree* t) {
     bool continuing = true;
     bool warning = false;
     while(continuing) {
+        long ndice = d->ndice;
+        if(d->keep) {
+            ndice = d->ndice - d->discard < 0 ? 0 : d->ndice - d->discard;
+        }
         switch(d->dir) {
             case pos:
-                if(cumulative_dice_range[1] > 0 && (LONG_MAX-cumulative_dice_range[1])/d->ndice < d->nsides) {
+                if(cumulative_dice_range[1] > 0 && ndice > 0 && (LONG_MAX-cumulative_dice_range[1])/d->ndice < d->nsides) {
                     warning = true;
                 } else {
                     cumulative_dice_range[0] += d->nsides;
-                    cumulative_dice_range[1] += d->ndice*d->nsides;
+                    cumulative_dice_range[1] += ndice*d->nsides;
                 }
                 break;
             case neg:
-                if(cumulative_dice_range[1] < 0 && (LONG_MIN-cumulative_dice_range[0])/d->ndice > -d->nsides) {
+                if(cumulative_dice_range[1] < 0 && ndice > 0 && (LONG_MIN-cumulative_dice_range[0])/d->ndice > -d->nsides) {
                     warning = true;
                 } else {
-                    cumulative_dice_range[0] -= d->ndice*d->nsides;
+                    cumulative_dice_range[0] -= ndice*d->nsides;
                     cumulative_dice_range[1] -= d->nsides;
                 }
                 break;
