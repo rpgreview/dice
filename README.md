@@ -220,6 +220,29 @@ Most dependencies will be installed on most Linuces but maybe you will need your
 package manager to install things like termcap, wordexp or OpenMP.
 
 Note, however, that GCC ships with libgomp, so explicit installation of OpenMP probably won't be required.
+Not all distros are developer-friendly, so you might not have GCC by default.
+Eg, you might need to install the `build-essential` package if you are on Ubuntu.
+
+
+Validity checks
+----
+
+The software will try to warn when the requested rolls could cumulatively cause an integer overflow. For example:
+
+```
+dice> 1000000d100000000 + 9223372036854775805
+Warning: +1000000d100000000+9223372036854775805d1 are prone to integer overflow.
+-9223322044654812424
+```
+
+However, for exploding dice, there is no upper bound on the possible results.
+The number of "explosions" will be a geometrically distributed random variable[1], so although large outcomes may have negligible probability for any single dice, they are nevertheless possible.
+Rather than attempt the impossible, Dice ignores the prospect of explosions when validating its input.
+
+For most games, the number of dice rolled is fairly small, so the risk of integer overflow from exploding dice can just be ignored.
+If you are perverse enough to ask for a very large number of exploding dice, then the results are on your own head.
+
+[1] https://en.wikipedia.org/wiki/Geometric_distribution
 
 
 Contributing
