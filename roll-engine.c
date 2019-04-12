@@ -19,6 +19,12 @@
 #include "roll-engine.h"
 #include "util.h"
 
+bool break_print_loop = false;
+
+void sigint_handler(int sig) {
+    break_print_loop = true;
+}
+
 void print_dice_specs(const struct roll_encoding *d) {
     switch(d->dir) {
         case pos:

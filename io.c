@@ -115,7 +115,3 @@ void write_history_wrapper(const char *filename) {
     }
     wordfree(&matched_paths);
 }
-
-void sigint_handler(int sig) {
-    break_print_loop = true;
-}

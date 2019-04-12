@@ -9,8 +9,6 @@
 #include "parse.h"
 #include "io.h"
 
-bool break_print_loop = false;
-
 int main(int argc, char** argv) {
     struct arguments args;
     args.prompt = "\001\e[0;32m\002dice> \001\e[0m\002";
