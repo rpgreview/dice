@@ -574,13 +574,10 @@ void process_command(struct token *tok, struct parse_tree *t, state_t *s, long* 
 }
 
 void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
-    bool continuing = false;
     switch(*s) {
-        case start:
-            continuing = true;
+        case start: case check_modifiers_or_more_rolls: case check_more_rolls: case check_end:
             break;
         case decide_reps_or_rolls:
-            continuing = true;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
                 t->last_roll = t->dice_specs;
@@ -594,28 +591,20 @@ void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_
             t->ndice += *tmp;
             break;
         case check_dice_operator:
-            continuing = true;
             t->last_roll->nsides = 1;
-            break;
-        case check_modifiers_or_more_rolls: case check_more_rolls:
-            continuing = true;
-            break;
-        case check_end:
-            continuing = true;
             break;
         default:
             printf("Cannot process operator '%c' while in state '", tok->op);
             print_state_name(*s);
             printf("'\n");
             *s = error;
+            return;
     }
-    if(continuing) {
-        if(!t->suppress) {
-            roll(t);
-        }
-        *s = start;
-        parse_tree_reset(t);
+    if(!t->suppress) {
+        roll(t);
     }
+    *s = start;
+    parse_tree_reset(t);
 }
 
 void process_eol(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
