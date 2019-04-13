@@ -314,9 +314,9 @@ void process_number(struct token *tok, struct parse_tree *t, state_t *s, long* t
             }
             break;
         case check_number_of_dice:
-            if(tok->number > LONG_MAX) {
+            if(tok->number > SHRT_MAX) {
                 *s = error;
-                printf("The maximum number of dice is %ld (LONG_MAX).\n", LONG_MAX);
+                printf("The maximum number of dice is %d (SHRT_MAX).\n", SHRT_MAX);
             } else {
                 t->last_roll->ndice = tok->number;
                 *s = check_dice_operator;
