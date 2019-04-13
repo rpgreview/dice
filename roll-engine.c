@@ -139,15 +139,12 @@ void check_roll_sanity(const struct parse_tree* t) {
     }
 }
 
-void do_rep_rolls(const struct parse_tree *t) {
+void do_rep_rolls(long **results, const struct parse_tree *t) {
     long rep = 0;
     long nsuccess = 0;
     bool keep_going = true;
     #pragma omp parallel for private(rep, roll_num) shared(keep_going, rolls) collapse(2)
     for(rep = 0; rep < t->nreps; ++rep) {
-        if(rep != 0 && !t->use_threshold) {
-            printf(" ");
-        }
         struct roll_encoding *d = t->dice_specs;
         long result = 0;
         while(d != NULL && keep_going) {
@@ -188,22 +185,21 @@ void do_rep_rolls(const struct parse_tree *t) {
         if(t->use_threshold) {
             nsuccess += result >= t->threshold;
         } else {
-            printf("%ld", result);
+            *(*results + rep) = result;
         }
     }
     if(t->use_threshold) {
-        printf("%ld", nsuccess);
+        **results = nsuccess;
     }
+    #pragma omp flush
 }
 
-void roll(const struct parse_tree *t) {
+void roll(long **results, const struct parse_tree *t) {
     if(t->dice_specs == NULL) {
         return;
     }
     signal(SIGINT, sigint_handler);
     break_print_loop = false;
     check_roll_sanity(t);
-    do_rep_rolls(t);
-    printf("\n");
-    #pragma omp flush
+    do_rep_rolls(results, t);
 }

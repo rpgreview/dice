@@ -27,7 +27,16 @@ void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     t->current = t;
     while(t->current != NULL) {
         if(!t->current->suppress) {
-            roll(t->current);
+            size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
+            long *results = malloc(nresults*sizeof(long));
+            memset(results, 0, nresults*sizeof(long));
+            roll(&results, t->current);
+            for(long rep = 0; rep < nresults; ++rep) {
+                printf("%s%ld", rep == 0 ? "" : " ", results[rep]);
+            }
+            printf("\n");
+            free(results);
+            results = NULL;
         }
         t->current = t->current->next;
     }
@@ -51,7 +60,16 @@ void readline_wrapper(struct parse_tree *t, struct arguments *args) {
     t->current = t;
     while(t->current != NULL) {
         if(!t->current->suppress) {
-            roll(t->current);
+            size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
+            long *results = malloc(nresults*sizeof(long));
+            memset(results, 0, nresults*sizeof(long));
+            roll(&results, t->current);
+            for(long rep = 0; rep < nresults; ++rep) {
+                printf("%s%ld", rep == 0 ? "" : " ", results[rep]);
+            }
+            printf("\n");
+            free(results);
+            results = NULL;
         }
         t->current = t->current->next;
     }
