@@ -9,6 +9,7 @@
 
 #include "io.h"
 #include "parse.h"
+#include "roll-engine.h"
 
 void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     size_t bufsize = 0;
@@ -20,10 +21,17 @@ void getline_wrapper(struct parse_tree *t, struct arguments *args) {
             printf("Error %d (%s) getting line for reading.\n", errno, strerror(errno));
         }
         t->quit = true;
-        free(line);
-        return;
+        goto end_of_getline;
     }
     parse(t, line, bufsize);
+    t->current = t;
+    while(t->current != NULL) {
+        if(!t->current->suppress) {
+            roll(t->current);
+        }
+        t->current = t->current->next;
+    }
+end_of_getline:
     free(line);
 }
 
@@ -36,14 +44,21 @@ void readline_wrapper(struct parse_tree *t, struct arguments *args) {
     if(line == NULL || line == 0) {
         printf("\n");
         t->quit = true;
-        free(line);
-        return;
+        goto end_of_readline;
     }
     size_t bufsize = strlen(line);
     int parse_success = parse(t, line, bufsize);
+    t->current = t;
+    while(t->current != NULL) {
+        if(!t->current->suppress) {
+            roll(t->current);
+        }
+        t->current = t->current->next;
+    }
     if(0 == parse_success) {
         add_history(line);
     }
+end_of_readline:
     free(line);
 }
 

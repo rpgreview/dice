@@ -21,6 +21,7 @@ struct roll_encoding {
     struct roll_encoding *next;
 };
 
+struct parse_tree;
 struct parse_tree {
     bool suppress; // Used to silence output, eg when clearing screen
     bool quit;
@@ -30,6 +31,8 @@ struct parse_tree {
     struct roll_encoding *dice_specs;
     struct roll_encoding *last_roll; // Easily find latest entry in dice_specs list
     long ndice;
+    struct parse_tree *next;
+    struct parse_tree *current;
 };
 
 typedef enum token_t {
@@ -84,6 +87,8 @@ void clear_screen();
 void token_init(struct token *t);
 int lex(struct token *t, int *tokens_found, const char *buf, const size_t len);
 void print_state_name(const state_t s);
+void print_parse_tree(const struct parse_tree *t);
 int parse(struct parse_tree *t, const char *buf, const size_t len);
+void parse_tree_initialise(struct parse_tree *t);
 void parse_tree_reset(struct parse_tree *t);
 #endif // __PARSE_H__

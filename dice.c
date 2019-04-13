@@ -47,8 +47,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "malloc error\n");
         exit(1);
     }
-    memset(t, 0, sizeof(struct parse_tree));
-    parse_tree_reset(t);
+    parse_tree_initialise(t);
 
     char *histfile="~/.dice_history";
     void (*process_next_line)(struct parse_tree*, struct arguments*);

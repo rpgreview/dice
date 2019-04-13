@@ -281,10 +281,11 @@ void print_parse_tree(const struct parse_tree *t) {
     printf(", quit: %s", t->quit ? "true" : "false");
     printf(", nreps: %ld", t->nreps);
     printf(", ndice: %ld", t->ndice);
-    printf(", roll string: ");
+    printf(", roll string: '");
     if(t->dice_specs != NULL) {
         print_dice_specs(t->dice_specs);
     }
+    printf("'}");
 }
 
 void process_none(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
@@ -600,11 +601,7 @@ void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_
             *s = error;
             return;
     }
-    if(!t->suppress) {
-        roll(t);
-    }
     *s = start;
-    parse_tree_reset(t);
 }
 
 void process_eol(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
@@ -627,11 +624,7 @@ void process_eol(struct token *tok, struct parse_tree *t, state_t *s, long* tmp)
             break;
         default: {}
     }
-    if(!t->suppress) {
-        roll(t);
-    }
     *s = finish;
-    parse_tree_reset(t);
 }
 
 void process_default(struct token *tok, struct parse_tree *t, state_t *s, long* tmp) {
@@ -639,6 +632,19 @@ void process_default(struct token *tok, struct parse_tree *t, state_t *s, long* 
     print_state_name(*s);
     printf("'\n");
     *s = error;
+}
+
+void parse_tree_initialise(struct parse_tree *t) {
+    t->suppress = false;
+    t->quit = false;
+    t->nreps = 1;
+    t->ndice = 0;
+    t->use_threshold = false;
+    t->threshold = 0;
+    t->last_roll = NULL;
+    t->dice_specs = NULL;
+    t->next = NULL;
+    t->current = t;
 }
 
 void parse_tree_reset(struct parse_tree *t) {
@@ -653,6 +659,12 @@ void parse_tree_reset(struct parse_tree *t) {
         dice_reset(t->dice_specs);
         t->dice_specs = NULL;
     }
+    if(t->next != NULL) {
+        parse_tree_reset(t->next);
+        free(t->next);
+        t->next = NULL;
+    }
+    t->current = t;
 }
 
 int parse(struct parse_tree *t, const char *buf, const size_t len) {
@@ -669,6 +681,7 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
     int toknum;
     void (*process_token)(struct token *tok, struct parse_tree *t, state_t *s, long* tmp);
     for(toknum = 0; toknum < tokens_found && !(s == finish || s == error); ++toknum) {
+        bool increment_statement = false;
         switch(toks[toknum].type) {
             case none:
                 process_token = process_none;
@@ -699,6 +712,7 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
                 break;
             case statement_delimiter:
                 process_token = process_statement_delimiter;
+                increment_statement = true;
                 break;
             case eol:
                 process_token = process_eol;
@@ -706,16 +720,22 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
             default:
                 process_token = process_default;
         }
-        process_token(toks + toknum, t, &s, &tmp);
-        if(t->quit) {
+        process_token(toks + toknum, t->current, &s, &tmp);
+        if(t->current->quit) {
+            t->quit = true;
             break;
+        }
+        if(increment_statement) {
+            t->current->next = malloc(sizeof(struct parse_tree));
+            parse_tree_initialise(t->current->next);
+            t->current = t->current->next;
         }
     }
     if(s == finish) {
         return 0;
     } else {
         if(s == error) {
-            parse_tree_reset(t);
+            parse_tree_reset(t->current);
         }
         return 1;
     }
