@@ -7,3 +7,6 @@ dice_CFLAGS = -I$(top_srcdir)/include
 dice_LDADD = lib/libdice.la
 
 man1_MANS = dice.1
+
+examplesdir = $(pkgdatadir)/examples
+dist_examples_DATA = examples/dice-test.sh examples/testing.dice examples/valgrind.sh
