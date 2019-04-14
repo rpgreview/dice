@@ -354,9 +354,17 @@ void process_dice_operator(struct token *tok, struct parse_tree *t, state_t *s, 
         case start:
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -367,9 +375,17 @@ void process_dice_operator(struct token *tok, struct parse_tree *t, state_t *s, 
         case want_roll:
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -380,9 +396,17 @@ void process_dice_operator(struct token *tok, struct parse_tree *t, state_t *s, 
         case decide_reps_or_rolls:
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -412,9 +436,17 @@ void process_rep_operator(struct token *tok, struct parse_tree *t, state_t *s, l
             *s = want_roll;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -433,9 +465,17 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             *s = check_number_of_dice;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -445,9 +485,17 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             *s = check_number_of_dice;
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -456,9 +504,17 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
         case decide_reps_or_rolls: // Deal with cases like 1+2d4. Need to process first number then set things up for the following.
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -468,6 +524,10 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             // First number done, now set up for whatever follows.
             *s = check_number_of_dice;
             t->last_roll->next = malloc(sizeof(struct roll_encoding));
+            if(t->last_roll->next == NULL) {
+                fprintf(stderr, "Memory allocation failure\n");
+                exit(1);
+            }
             t->last_roll = t->last_roll->next;
             dice_init(t->last_roll);
             t->last_roll->dir = tok->op == '+' ? pos : neg;
@@ -476,6 +536,10 @@ void process_additive_operator(struct token *tok, struct parse_tree *t, state_t 
             t->last_roll->nsides = 1;
             *s = check_number_of_dice;
             t->last_roll->next = malloc(sizeof(struct roll_encoding));
+            if(t->last_roll->next == NULL) {
+                fprintf(stderr, "Memory allocation failure\n");
+                exit(1);
+            }
             t->last_roll = t->last_roll->next;
             dice_init(t->last_roll);
             t->last_roll->dir = tok->op == '+' ? pos : neg;
@@ -525,9 +589,17 @@ void process_threshold_operator(struct token *tok, struct parse_tree *t, state_t
         case decide_reps_or_rolls: 
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -581,9 +653,17 @@ void process_statement_delimiter(struct token *tok, struct parse_tree *t, state_
         case decide_reps_or_rolls:
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -609,9 +689,17 @@ void process_eol(struct token *tok, struct parse_tree *t, state_t *s, long* tmp)
         case decide_reps_or_rolls:
             if(t->last_roll == NULL) {
                 t->dice_specs = malloc(sizeof(struct roll_encoding));
+                if(t->dice_specs == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->dice_specs;
             } else {
                 t->last_roll->next = malloc(sizeof(struct roll_encoding));
+                if(t->last_roll->next == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 t->last_roll = t->last_roll->next;
             }
             dice_init(t->last_roll);
@@ -727,6 +815,10 @@ int parse(struct parse_tree *t, const char *buf, const size_t len) {
         }
         if(increment_statement) {
             t->current->next = malloc(sizeof(struct parse_tree));
+            if(t->current->next == NULL) {
+                fprintf(stderr, "Memory allocation failure\n");
+                exit(1);
+            }
             parse_tree_initialise(t->current->next);
             t->current = t->current->next;
         }

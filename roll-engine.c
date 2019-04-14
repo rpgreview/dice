@@ -155,6 +155,10 @@ void do_rep_rolls(long **results, const struct parse_tree *t) {
                     sum = d->ndice;
                 }
                 long *rolls = malloc(sizeof(long)*d->ndice);
+                if(rolls == NULL) {
+                    fprintf(stderr, "Memory allocation error\n");
+                    exit(1);
+                }
                 for(roll_num = 0; roll_num < d->ndice; ++roll_num) {
                     rolls[roll_num] = single_dice_outcome(d);
                     sum += rolls[roll_num];

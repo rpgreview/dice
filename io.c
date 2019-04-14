@@ -29,6 +29,10 @@ void getline_wrapper(struct parse_tree *t, struct arguments *args) {
         if(!t->current->suppress) {
             size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
             long *results = malloc(nresults*sizeof(long));
+            if(results == NULL) {
+                fprintf(stderr, "Memory allocation failure\n");
+                exit(1);
+            }
             memset(results, 0, nresults*sizeof(long));
             roll(&results, t->current);
             for(long rep = 0; rep < nresults; ++rep) {
@@ -62,6 +66,10 @@ void readline_wrapper(struct parse_tree *t, struct arguments *args) {
         if(!t->current->suppress) {
             size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
             long *results = malloc(nresults*sizeof(long));
+            if(results == NULL) {
+                fprintf(stderr, "Memory allocation failure\n");
+                exit(1);
+            }
             memset(results, 0, nresults*sizeof(long));
             roll(&results, t->current);
             for(long rep = 0; rep < nresults; ++rep) {

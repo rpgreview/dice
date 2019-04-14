@@ -26,12 +26,16 @@ static struct argp_option options[] = {
    Order of parameters: KEY, ARG, STATE.
 */
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
-    struct arguments *arguments = state->input;
+    struct arguments *arguments = (struct arguments *)state->input;
     switch (key) {
         case 'p':
             {
                 int prompt_length = strlen(arg);
                 arguments->prompt = (char*)malloc(prompt_length*sizeof(char));
+                if(arguments->prompt == NULL) {
+                    fprintf(stderr, "Memory allocation failure\n");
+                    exit(1);
+                }
                 memset(arguments->prompt, 0, prompt_length);
                 strncpy(arguments->prompt, arg, prompt_length + 1);
             }
