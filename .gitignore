@@ -103,3 +103,7 @@ m4/lt~obsolete.m4
 Makefile
 config.h
 *.tar.gz
+.libs/
+config.h.in~
+lib/.libs/
+libtool

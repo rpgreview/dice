@@ -5,8 +5,8 @@
 
 #include <readline/readline.h>
 
+#include <parse.h>
 #include "args.h"
-#include "parse.h"
 #include "io.h"
 
 int main(int argc, char** argv) {

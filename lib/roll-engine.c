@@ -14,10 +14,9 @@
 #include <readline/history.h>
 #include <omp.h>
 
-#include "parse.h"
-#include "io.h"
-#include "roll-engine.h"
-#include "util.h"
+#include "../include/parse.h"
+#include "../include/roll-engine.h"
+#include "../include/util.h"
 
 bool break_print_loop = false;
 

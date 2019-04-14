@@ -7,8 +7,8 @@
 #include <termcap.h> // Needed for clear_screen
 #include <errno.h>
 #include <omp.h>
-#include "parse.h"
-#include "roll-engine.h"
+#include "../include/parse.h"
+#include "../include/roll-engine.h"
 
 static const struct cmd_map commands[] = {
     { quit, { "quit" } },

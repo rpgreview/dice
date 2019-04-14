@@ -7,9 +7,9 @@
 #include <wordexp.h> // Needed to expand out history path eg involving '~'
 #include <errno.h>
 
+#include <parse.h>
+#include <roll-engine.h>
 #include "io.h"
-#include "parse.h"
-#include "roll-engine.h"
 
 void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     size_t bufsize = 0;
