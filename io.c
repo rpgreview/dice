@@ -7,9 +7,9 @@
 #include <wordexp.h> // Needed to expand out history path eg involving '~'
 #include <errno.h>
 
-#include <parse.h>
-#include <roll-engine.h>
 #include "io.h"
+#include "parse.h"
+#include "roll-engine.h"
 
 void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     size_t bufsize = 0;
@@ -27,20 +27,7 @@ void getline_wrapper(struct parse_tree *t, struct arguments *args) {
     t->current = t;
     while(t->current != NULL) {
         if(!t->current->suppress) {
-            size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
-            long *results = malloc(nresults*sizeof(long));
-            if(results == NULL) {
-                fprintf(stderr, "Memory allocation failure\n");
-                exit(1);
-            }
-            memset(results, 0, nresults*sizeof(long));
-            roll(&results, t->current);
-            for(long rep = 0; rep < nresults; ++rep) {
-                printf("%s%ld", rep == 0 ? "" : " ", results[rep]);
-            }
-            printf("\n");
-            free(results);
-            results = NULL;
+            roll(t->current);
         }
         t->current = t->current->next;
     }
@@ -64,20 +51,7 @@ void readline_wrapper(struct parse_tree *t, struct arguments *args) {
     t->current = t;
     while(t->current != NULL) {
         if(!t->current->suppress) {
-            size_t nresults = t->current->use_threshold ? 1 : t->current->nreps;
-            long *results = malloc(nresults*sizeof(long));
-            if(results == NULL) {
-                fprintf(stderr, "Memory allocation failure\n");
-                exit(1);
-            }
-            memset(results, 0, nresults*sizeof(long));
-            roll(&results, t->current);
-            for(long rep = 0; rep < nresults; ++rep) {
-                printf("%s%ld", rep == 0 ? "" : " ", results[rep]);
-            }
-            printf("\n");
-            free(results);
-            results = NULL;
+            roll(t->current);
         }
         t->current = t->current->next;
     }

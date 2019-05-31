@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "../include/util.h"
+#include "util.h"
 
 // For consumption by qsort_r from stdlib
 // Return -1, 0, 1 depending on whether a < b, a == b, a > b

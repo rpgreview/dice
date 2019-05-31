@@ -2,7 +2,7 @@
 #define __IO_H__
 #include <stdio.h>
 #include <stdbool.h>
-#include <parse.h>
+#include "parse.h"
 
 typedef enum invocation_type {
     INTERACTIVE = 0,
